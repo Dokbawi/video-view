@@ -16,7 +16,7 @@ try {
         Copy-Item -LiteralPath (Join-Path $ffmpegDirectory 'bin\ffmpeg.exe'),(Join-Path $ffmpegDirectory 'bin\ffprobe.exe') -Destination $mediaTools -Force
         Copy-Item -LiteralPath (Join-Path $ffmpegDirectory 'LICENSE.txt') -Destination (Join-Path $mediaTools 'FFmpeg-LICENSE.txt') -Force
     }
-    Copy-Item -LiteralPath 'README.md','THIRD_PARTY_NOTICES.md' -Destination $outputDirectory -Force
+    Copy-Item -LiteralPath 'README.md','THIRD_PARTY_NOTICES.md','LICENSE','NOTICE' -Destination $outputDirectory -Force
     $docsDirectory = Join-Path $outputDirectory 'docs'
     New-Item -ItemType Directory -Path $docsDirectory -Force | Out-Null
     Copy-Item -LiteralPath 'docs/ACCEPTANCE.md','docs/VALIDATION.md','docs/INTERACTION_DESIGN.md','docs/UX_RESEARCH.md' -Destination $docsDirectory -Force

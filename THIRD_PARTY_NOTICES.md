@@ -4,11 +4,13 @@ The desktop application invokes FFmpeg as a separate executable. Package version
 
 ## Public release packaging
 
-The public `VideoView-v0.5.0-win-x64.zip` contains the application and .NET runtime, but **does not redistribute FFmpeg or FFprobe executables**. `Install-MediaTools.cmd` asks before downloading the unmodified Gyan package directly to the user's machine. It verifies the archive and executable SHA-256 hashes and retains upstream `LICENSE` and `README.txt` alongside the installed tools. Users may instead configure their own FFmpeg paths.
+The public installer and portable ZIP contain the application and .NET runtime, but **do not redistribute FFmpeg or FFprobe executables**. The setup wizard explains and automatically performs a separate download of the unmodified Gyan package directly to the user's machine. The portable ZIP retains `Install-MediaTools.cmd` as an optional manual setup path. Both verify the archive and executable SHA-256 hashes and retain upstream `LICENSE` and `README.txt` alongside the installed tools. Users may instead configure their own FFmpeg paths.
 
-The local development `scripts/publish.ps1` default can bundle the developer's FFmpeg copy. That private test package is not the public release asset. Use `scripts/package-public.ps1` for the public package.
+The local development `scripts/publish.ps1` default can bundle the developer's FFmpeg copy. That private test package is not the public release asset. Use `scripts/package-installer.ps1` for the public installer and ZIP.
 
-Runtime license texts are preserved in `licenses/`: .NET, NAudio, Vortice.Windows, Vortice.Mathematics, SharpGenTools, and C#/WinRT. The Windows SDK .NET targeting package also references Microsoft's terms at https://aka.ms/WinSDKLicenseURL. The application's own code has no open-source license selected yet; third-party terms are unchanged.
+The installer is built with unmodified Inno Setup 7.1.0 by Jordan Russell and Martijn Laan (https://jrsoftware.org/). Its license is included at `licenses/InnoSetup.txt`; its original installer notices are retained.
+
+Runtime license texts are preserved in `licenses/`: .NET, NAudio, Vortice.Windows, Vortice.Mathematics, SharpGenTools, and C#/WinRT. The Windows SDK .NET targeting package also references Microsoft's terms at https://aka.ms/WinSDKLicenseURL. VideoView's own code is licensed under GPL-3.0-only; see `LICENSE` and `NOTICE`. Third-party terms are unchanged.
 
 | Component | Version | Upstream / license information |
 | --- | --- | --- |

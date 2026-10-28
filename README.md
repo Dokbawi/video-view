@@ -1,14 +1,14 @@
 <h1 align="center">VideoView</h1>
 <p align="center"><strong>지금 녹화하고, 방금 지나간 순간도 저장하세요.</strong><br>Windows용 로컬 음성 녹음 · 화면 녹화 · 최근 구간 저장</p>
 <p align="center">
-<a href="https://github.com/Dokbawi/video-view/releases/tag/v0.5.0">다운로드</a> ·
+<a href="https://github.com/Dokbawi/video-view/releases/tag/v0.5.1">다운로드</a> ·
 <a href="docs/USAGE.md">사용 가이드</a> ·
 <a href="https://github.com/Dokbawi/video-view/issues/new/choose">버그·기능 요청</a> ·
 <a href="https://github.com/Dokbawi/video-view/discussions">질문·사용 후기</a>
 </p>
 <p align="center">
 <img alt="Windows 11 x64" src="https://img.shields.io/badge/Windows_11-x64-0078D4">
-<img alt="Preview v0.5.0" src="https://img.shields.io/badge/preview-v0.5.0-95efcb">
+<img alt="Preview v0.5.1" src="https://img.shields.io/badge/preview-v0.5.1-95efcb">
 <img alt="Local recording" src="https://img.shields.io/badge/recording-local_only-343b46">
 </p>
 
@@ -22,13 +22,17 @@
 
 ## 다운로드와 실행
 
-1. [v0.5.0 릴리즈](https://github.com/Dokbawi/video-view/releases/tag/v0.5.0)의 **VideoView-v0.5.0-win-x64.zip**을 내려받아 폴더 전체를 압축 해제합니다.
-2. **Install-MediaTools.cmd**를 한 번 실행합니다. 안내를 확인하고 **Y**를 입력하면 공식 Gyan 배포처에서 FFmpeg·FFprobe를 다운로드하고 SHA-256을 검증해 설치합니다. 처음 한 번 인터넷 연결이 필요합니다.
-3. **VideoView.exe**를 실행합니다. 이후 녹음·편집은 로컬에서 동작합니다.
+**[Windows 설치 파일 다운로드](https://github.com/Dokbawi/video-view/releases/download/v0.5.1/VideoView-Setup-v0.5.1-win-x64.exe)**
 
-별도 .NET 설치나 관리자 권한이 필요 없는 **압축 해제형 배포본**입니다. 공개 ZIP에는 .NET 런타임을 포함하고 FFmpeg는 사용자가 공식 배포처에서 설치합니다. 이미 FFmpeg가 있다면 앱 설정에서 FFmpeg·FFprobe 경로를 지정할 수도 있습니다.
+**EXE 실행 → 자동 준비 → 앱 바로 실행.** ‘다음’을 여러 번 누르거나 압축을 풀 필요가 없습니다. 진행 창에서 앱과 미디어 도구를 준비한 뒤 VideoView를 자동으로 엽니다. .NET 런타임은 포함되어 있고, FFmpeg·FFprobe는 공식 Gyan 배포처에서 자동으로 다운로드·검증합니다. 처음 실행할 때 약 109MB의 추가 다운로드와 인터넷 연결이 필요합니다. 이후에는 시작 메뉴의 **VideoView**를 열면 바로 실행되며 녹음·편집은 로컬에서 동작합니다.
 
-현재 설치 마법사, 코드 서명, 자동 업데이트는 없습니다. 업데이트할 때는 기존 앱을 트레이 메뉴에서 종료한 뒤 새 폴더의 실행 파일을 여세요. 녹화 원본과 인접 `.recording.json`은 함께 보관합니다.
+관리자 권한 없이 사용자 폴더에 설치하며 시작 메뉴 바로가기와 Windows 앱 제거를 지원합니다. 업데이트할 때는 녹화를 저장하고 기존 앱을 **트레이 메뉴에서 종료**한 뒤 새 설치 파일을 실행하세요. 정상 미디어 도구가 있으면 다시 다운로드하지 않습니다. 제거해도 녹화 원본과 사용자 설정은 보존합니다. 코드 서명과 자동 업데이트는 아직 없습니다.
+
+<details>
+<summary>설치 없이 쓰는 포터블 ZIP</summary>
+
+[릴리즈](https://github.com/Dokbawi/video-view/releases/tag/v0.5.1)의 `VideoView-v0.5.1-win-x64.zip`을 폴더 전체로 압축 해제하고, `Install-MediaTools.cmd`에서 안내를 확인한 뒤 `Y`를 입력하세요. 미디어 도구 준비 후 `VideoView.exe`를 실행합니다. 이미 FFmpeg가 있으면 앱 설정에서 두 실행 파일 경로를 지정할 수도 있습니다.
+</details>
 
 ## 주요 기능
 
@@ -91,4 +95,10 @@ v0.5에서 **무음 통합 305개 검사**, **305초 실시간 버퍼의 318개 
 
 [기여 안내](CONTRIBUTING.md) · [소스 빌드](docs/BUILDING.md) · [변경 내역](CHANGELOG.md) · [수동 검증 항목](docs/ACCEPTANCE.md) · [UI/UX 조사 근거](docs/UX_RESEARCH.md) · [제3자 구성요소](THIRD_PARTY_NOTICES.md)
 
-C# / .NET 10 / WPF, Windows Graphics Capture, WASAPI, FFmpeg를 사용합니다. 자체 코드의 오픈소스 라이선스는 아직 지정하지 않았으며, 제3자 구성요소에는 각 구성요소의 라이선스가 적용됩니다.
+C# / .NET 10 / WPF, Windows Graphics Capture, WASAPI, FFmpeg를 사용합니다.
+
+## 라이선스
+
+Copyright © 2026 Dokbawi and contributors. 자체 코드는 **[GNU GPL v3](LICENSE)** (`GPL-3.0-only`)입니다. 사용·복제·수정·상업 이용을 허용하며, 재배포할 때 저작권·라이선스 고지를 유지해야 합니다. 수정본을 배포하면 해당 소스와 빌드에 필요한 자료도 GPL v3 조건에 맞게 제공해야 합니다. 개인적으로 수정해 사용하는 것만으로 공개 의무가 생기지는 않습니다. 보증은 제공하지 않습니다.
+
+라이선스는 복제 자체를 막는 장치가 아닙니다. 제3자 구성요소에는 [각 구성요소의 라이선스](THIRD_PARTY_NOTICES.md)가 적용됩니다. 공개 실행 파일에 대응하는 소스는 같은 버전의 Git 태그에서 받을 수 있습니다.

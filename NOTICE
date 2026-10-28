@@ -1,0 +1,18 @@
+VideoView
+Copyright (C) 2026 Dokbawi and contributors
+
+VideoView is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License version 3, as published by the
+Free Software Foundation (SPDX-License-Identifier: GPL-3.0-only).
+
+VideoView is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See LICENSE for the complete terms.
+
+Source code and build instructions for each release:
+https://github.com/Dokbawi/video-view
+https://github.com/Dokbawi/video-view/blob/main/docs/BUILDING.md
+Use the matching release tag (for example, v0.5.1) to obtain its source.
+
+Third-party components retain their respective licenses and notices.
+See THIRD_PARTY_NOTICES.md, licenses/, and tools/FFmpeg-LICENSE.txt.
