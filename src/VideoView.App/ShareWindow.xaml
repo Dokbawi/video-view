@@ -192,6 +192,7 @@
 
     <Border x:Name="Footer" Grid.Row="2" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Background="{StaticResource Panel}" Padding="24,12,24,16">
       <StackPanel>
+        <TextBlock Text="공유 전 목소리·채팅·알림·개인정보와 공개 권한을 확인하세요." Style="{StaticResource ShareHelp}" Margin="0,0,0,9"/>
         <TextBlock x:Name="FooterHint" Text="01  대상 선택    /    02  크기 설정    /    03  파일 전달" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,10" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
           <Button x:Name="BackButton" Content="닫기" Style="{StaticResource ShareButton}" MinWidth="74" Margin="0,0,9,0" Click="Back_Click" AutomationProperties.Name="공유 창 닫기 또는 이전 단계"/>

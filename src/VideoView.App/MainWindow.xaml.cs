@@ -104,7 +104,12 @@ public partial class MainWindow : Window
                 if (_arguments.Contains("--saved-receipt")) ShowSavedFile(Path.Combine(AppContext.BaseDirectory, "sample.mp4"), null,
                     "공유 파일 완성 · 7.42 MB · VideoView_sample.mp4");
             }
-            ShowPage(page);
+            if (page == "notices")
+            {
+                ShowUsageNotices();
+                if (_arguments.Contains("--license-expanded")) LicenseExpander.IsExpanded = true;
+            }
+            else ShowPage(page);
             var pathIndex = Array.IndexOf(_arguments, "--ui-smoke") + 1;
             var path = pathIndex < _arguments.Length ? _arguments[pathIndex] : Path.Combine(AppContext.BaseDirectory, "ui.png");
             var shareIndex = Array.IndexOf(_arguments, "--share-stage");
@@ -112,6 +117,7 @@ public partial class MainWindow : Window
             {
                 var dialog = new ShareWindow(_selected, _playStart, _playEnd, CurrentMix(), Tools(),
                     _settings.OutputDirectory, _settings.TargetMegabytes, true) { Owner = this };
+                if (_arguments.Contains("--compact")) { dialog.Width = dialog.MinWidth; dialog.Height = dialog.MinHeight; }
                 dialog.ConfigureSmoke(_arguments[shareIndex + 1], Path.GetFullPath(path));
                 dialog.ShowDialog(); _exiting = true; Close(); return;
             }
@@ -458,6 +464,7 @@ public partial class MainWindow : Window
         LibraryPage.Visibility = page == "library" ? Visibility.Visible : Visibility.Collapsed;
         SettingsPage.Visibility = page == "settings" ? Visibility.Visible : Visibility.Collapsed;
         SettingsSaveHost.Visibility = page == "settings" ? Visibility.Visible : Visibility.Collapsed;
+        HomeUsageHint.Visibility = page == "home" ? Visibility.Visible : Visibility.Collapsed;
         PageScroll.Visibility = page == "library" ? Visibility.Collapsed : Visibility.Visible;
         PageHeader.Visibility = page == "library" ? Visibility.Collapsed : Visibility.Visible;
         HomeNav.Background = page == "home" ? new SolidColorBrush(Color.FromRgb(37, 61, 52)) : Brushes.Transparent;

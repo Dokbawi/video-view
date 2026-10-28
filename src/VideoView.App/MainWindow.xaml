@@ -34,6 +34,10 @@
         <StackPanel Margin="0,0,150,0">
           <TextBlock x:Name="PageHeading" FontSize="20" FontWeight="SemiBold"/>
           <TextBlock x:Name="PageDescription" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,5,0,0"/>
+          <TextBlock x:Name="HomeUsageHint" Style="{StaticResource MutedText}" FontSize="12" Margin="0,7,0,0">
+            <Run Text="녹음 전 참여자에게 알리고, 필요한 동의·권한을 확인하세요.  "/>
+            <Hyperlink Click="UsageNotice_Click" Foreground="{StaticResource Accent}" AutomationProperties.Name="녹음·공유 이용 안내와 라이선스 보기">이용 안내</Hyperlink>
+          </TextBlock>
         </StackPanel>
         <Border x:Name="SettingsSaveHost" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed"/>
       </Grid>
@@ -299,6 +303,44 @@
               </StackPanel>
             </Border>
             <Button Content="설정 저장" Style="{StaticResource PrimaryButton}" Click="SaveSettings_Click" HorizontalAlignment="Right" Padding="32,12" Margin="0,20,0,10"/>
+            <Border x:Name="UsageNoticeCard" Style="{StaticResource Card}" Margin="0,18,0,0">
+              <StackPanel>
+                <TextBlock x:Name="UsageNoticeHeading" Text="이용 안내 · 라이선스" Style="{StaticResource SectionTitle}" Focusable="True"/>
+                <Grid>
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                  <StackPanel>
+                    <TextBlock Text="녹음하기 전에" FontWeight="SemiBold" Margin="0,0,0,7"/>
+                    <TextBlock Style="{StaticResource MutedText}" Text="참여자에게 녹음 사실을 알리고, 적용되는 법과 상황에 따라 필요한 동의·권한을 확인하세요. 본인이 참여하지 않는 비공개 대화를 권한 없이 녹음하지 마세요."/>
+                    <TextBlock Style="{StaticResource MutedText}" Text="최근 구간 보관과 자동 기록도 녹음입니다. 필요한 화면과 음원만 선택하세요." Margin="0,8,0,0"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2">
+                    <TextBlock Text="공유하기 전에" FontWeight="SemiBold" Margin="0,0,0,7"/>
+                    <TextBlock Style="{StaticResource MutedText}" Text="목소리·채팅·알림·개인정보와 공개 권한을 확인하세요. 필요하면 구간을 자르거나 음원을 제외하고, 민감한 화면이 남으면 공유하지 마세요."/>
+                    <TextBlock Style="{StaticResource MutedText}" Text="음악·게임·영상의 저작권과 서비스 이용 조건도 확인하세요. 녹화 파일은 로컬에 저장되며, 앱이 자동 업로드하지 않습니다." Margin="0,8,0,0"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="4">
+                    <TextBlock Text="무보증 · 원본 보관" FontWeight="SemiBold" Margin="0,0,0,7"/>
+                    <TextBlock Style="{StaticResource MutedText}" Text="무료 개인 오픈소스 프로젝트로, 법이 허용하는 범위에서 있는 그대로 제공됩니다. 오류 없는 동작, 녹화 보존, 특정 목적 적합성을 보증하지 않습니다. 중요한 원본은 별도로 백업하세요."/>
+                    <TextBlock Style="{StaticResource MutedText}" Text="무보증·책임 제한은 법이 허용하는 범위에만 적용됩니다. 법으로 배제할 수 없는 권리나 책임을 없애지 않습니다." Margin="0,8,0,0"/>
+                  </StackPanel>
+                </Grid>
+                <Border BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Margin="0,16,0,0" Padding="0,14,0,0">
+                  <StackPanel>
+                    <TextBlock Text="Copyright © 2026 Dokbawi and contributors · GPL-3.0-only" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="0,6,0,0" Text="사용·복제·수정·상업 이용·재배포가 가능합니다. 배포 시 GPL v3의 소스 제공·고지 조건을 지켜야 합니다. 이 안내는 추가 이용약관이 아니며, 라이선스를 변경하지 않습니다. 제3자 구성요소에는 각자의 라이선스가 적용됩니다."/>
+                    <Expander x:Name="LicenseExpander" Header="GPL v3 원문 보기 · 오프라인" Foreground="{StaticResource Text}" Margin="0,10,0,0" Expanded="License_Expanded">
+                      <TextBox x:Name="LicenseText" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" MaxHeight="230" Margin="0,8,0,0" FontSize="12" AutomationProperties.Name="GNU GPL v3 라이선스 원문"/>
+                    </Expander>
+                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="0,10,0,0">
+                      <Hyperlink NavigateUri="https://github.com/Dokbawi/video-view" RequestNavigate="ProjectLink_Navigate" Foreground="{StaticResource Accent}">소스 코드 ↗</Hyperlink>
+                      <Run Text="    "/>
+                      <Hyperlink NavigateUri="https://github.com/Dokbawi/video-view/blob/main/THIRD_PARTY_NOTICES.md" RequestNavigate="ProjectLink_Navigate" Foreground="{StaticResource Accent}">구성요소 라이선스 ↗</Hyperlink>
+                    </TextBlock>
+                    <TextBlock x:Name="UsageLinkStatus" Visibility="Collapsed" Style="{StaticResource MutedText}" FontSize="12" Margin="0,6,0,0" AutomationProperties.LiveSetting="Polite"/>
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </Border>
           </StackPanel>
         </Grid>
       </ScrollViewer>

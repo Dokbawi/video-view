@@ -19,7 +19,7 @@ try {
     Copy-Item -LiteralPath 'README.md','THIRD_PARTY_NOTICES.md','LICENSE','NOTICE' -Destination $outputDirectory -Force
     $docsDirectory = Join-Path $outputDirectory 'docs'
     New-Item -ItemType Directory -Path $docsDirectory -Force | Out-Null
-    Copy-Item -LiteralPath 'docs/ACCEPTANCE.md','docs/VALIDATION.md','docs/INTERACTION_DESIGN.md','docs/UX_RESEARCH.md' -Destination $docsDirectory -Force
+    Copy-Item -LiteralPath 'docs/ACCEPTANCE.md','docs/VALIDATION.md','docs/INTERACTION_DESIGN.md','docs/UX_RESEARCH.md','docs/USAGE.md','docs/RESPONSIBLE_USE.md' -Destination $docsDirectory -Force
     $licensesDirectory = Join-Path $outputDirectory 'licenses'
     New-Item -ItemType Directory -Path $licensesDirectory -Force | Out-Null
     Copy-Item -LiteralPath '.tools/nuget/naudio/2.2.1/license.txt' -Destination (Join-Path $licensesDirectory 'NAudio.txt') -Force

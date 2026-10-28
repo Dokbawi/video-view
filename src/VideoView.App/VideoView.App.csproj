@@ -9,9 +9,10 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets/VideoView.ico</ApplicationIcon>
     <AssemblyName>VideoView</AssemblyName>
-    <Version>0.5.1</Version>
+    <Version>0.5.2</Version>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="../../LICENSE" LogicalName="VideoView.LICENSE" />
     <ProjectReference Include="../VideoView.Platform/VideoView.Platform.csproj" />
   </ItemGroup>
 </Project>

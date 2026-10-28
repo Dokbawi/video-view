@@ -30,6 +30,7 @@ public partial class MainWindow
 
     private void ArrangeSettings()
     {
+        SettingsPage.Children.Remove(UsageNoticeCard);
         var cards = SettingsPage.Children.Cast<UIElement>().ToArray(); SettingsPage.Children.Clear();
         var grid = new Grid(); grid.ColumnDefinitions.Add(new()); grid.ColumnDefinitions.Add(new() { Width = new GridLength(18) }); grid.ColumnDefinitions.Add(new());
         var left = new StackPanel(); var right = new StackPanel(); Grid.SetColumn(right, 2);
@@ -42,6 +43,7 @@ public partial class MainWindow
         SettingsPage.Children.Add(grid);
         ((FrameworkElement)cards[4]).Margin = new Thickness(0);
         SettingsSaveHost.Child = cards[4];
+        SettingsPage.Children.Add(UsageNoticeCard);
     }
 
     private async void Recording_Selected(object sender, SelectionChangedEventArgs e)
