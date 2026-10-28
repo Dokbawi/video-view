@@ -1,0 +1,23 @@
+name: 기능·UI/UX 제안
+description: 필요한 기능이나 불편한 조작을 알려주세요.
+title: "[Idea] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 어떤 상황에서 불편했나요?
+      description: 하려던 작업과 현재 막히는 부분을 적어주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 원하는 동작
+    validations:
+      required: true
+  - type: textarea
+    id: reference
+    attributes:
+      label: 대안·참고 화면
+      description: 다른 프로그램에서 편했던 흐름이나 간단한 예시도 좋습니다.

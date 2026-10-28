@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/VideoView.Core/VideoView.Core.csproj" />
+  <Project Path="src/VideoView.Platform/VideoView.Platform.csproj" />
+  <Project Path="src/VideoView.App/VideoView.App.csproj" />
+  <Project Path="tests/VideoView.Tests/VideoView.Tests.csproj" />
+</Solution>

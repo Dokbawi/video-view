@@ -1,0 +1,39 @@
+name: 버그·성능 문제
+description: 예상과 다른 동작, 녹화·버퍼·편집 오류를 알려주세요.
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "개인 대화 녹음, 인증 정보, 전체 사용자 설정은 첨부하지 마세요. 가능한 경우 무음 자료로 재현해 주세요."
+  - type: input
+    id: version
+    attributes:
+      label: VideoView 버전
+      placeholder: "예: v0.5.0"
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 사용 환경과 기록 설정
+      description: Windows 버전, CPU/GPU, 해상도·FPS, 음원 종류, 버퍼 길이를 알려주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 재현 순서
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: 기대한 결과와 실제 결과
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 오류 문구·추가 자료
+      description: 민감한 내용을 지운 오류 메시지나 화면을 선택적으로 첨부해 주세요.

@@ -1,0 +1,514 @@
+<?xml version="1.0" ?>
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="clr-namespace:VideoView.App.Controls" x:Class="VideoView.App.MainWindow" Title="VideoView" Width="1360" Height="900" MinWidth="1050" MinHeight="740" WindowStartupLocation="CenterScreen" Style="{StaticResource {x:Type Window}}">
+  <Grid Background="{StaticResource Background}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="54"/>
+      <RowDefinition Height="*"/>
+    </Grid.RowDefinitions>
+    <Border Background="#181F27" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1">
+      <Grid Margin="20,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="180"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <TextBlock Text="◧" Foreground="{StaticResource Accent}" FontSize="24"/>
+          <TextBlock Text="VideoView" FontWeight="Bold" FontSize="19" Margin="10,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+          <Button x:Name="HomeNav" Content="녹화" Style="{StaticResource NavButton}" Click="Home_Click" Width="92"/>
+          <Button x:Name="LibraryNav" Content="보관함" Style="{StaticResource NavButton}" Click="Library_Click" Width="92"/>
+          <Button x:Name="SettingsNav" Content="설정" Style="{StaticResource NavButton}" Click="Settings_Click" Width="92"/>
+        </StackPanel>
+        <TextBlock Grid.Column="2" x:Name="StatusBadge" Text="●  준비됨" Foreground="{StaticResource Accent}" VerticalAlignment="Center" FontSize="12"/>
+      </Grid>
+    </Border>
+    <Grid Grid.Row="1" Margin="20,14,20,10">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+      <Grid x:Name="PageHeader" Margin="0,0,0,14">
+        <StackPanel Margin="0,0,150,0">
+          <TextBlock x:Name="PageHeading" FontSize="20" FontWeight="SemiBold"/>
+          <TextBlock x:Name="PageDescription" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,5,0,0"/>
+        </StackPanel>
+        <Border x:Name="SettingsSaveHost" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed"/>
+      </Grid>
+      <ScrollViewer x:Name="PageScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid>
+          <StackPanel x:Name="HomePage">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.55*"/>
+                <ColumnDefinition Width="18"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Border Style="{StaticResource Card}">
+                <StackPanel>
+                  <Grid>
+                    <TextBlock Text="화면 소스" Style="{StaticResource SectionTitle}"/>
+                    <Button Content="새로고침" Click="Refresh_Click" HorizontalAlignment="Right" Padding="9,4" FontSize="11" Margin="0,-4,0,8"/>
+                  </Grid>
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="130"/>
+                      <ColumnDefinition Width="10"/>
+                      <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <ComboBox x:Name="ModeBox" SelectionChanged="Mode_Changed" SelectedIndex="1">
+                      <ComboBoxItem Content="음성만"/>
+                      <ComboBoxItem Content="화면 + 음성"/>
+                    </ComboBox>
+                    <ComboBox Grid.Column="2" x:Name="TargetBox" DisplayMemberPath="Name" SelectionChanged="Target_Changed"/>
+                  </Grid>
+                  <Border Background="#0C1015" CornerRadius="8" Height="300" Margin="0,16,0,12" ClipToBounds="True">
+                    <Grid>
+                      <Image x:Name="CapturePreview" Stretch="Uniform"/>
+                      <StackPanel x:Name="PreviewPlaceholder" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="▣" FontSize="40" Foreground="#4F665E" HorizontalAlignment="Center"/>
+                        <TextBlock Text="녹화할 화면을 선택하세요" Foreground="{StaticResource Muted}" Margin="0,12,0,0" HorizontalAlignment="Center"/>
+                        <TextBlock Text="미리보기는 파일로 저장되지 않습니다" Foreground="#5E7182" FontSize="11" Margin="0,7,0,0"/>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                  <Grid>
+                    <TextBlock x:Name="CaptureInfo" Text="1080p · 30 FPS · 표준" Foreground="{StaticResource Muted}" VerticalAlignment="Center" FontSize="12"/>
+                    <Button x:Name="PreviewButton" Content="미리보기" HorizontalAlignment="Right" Click="Preview_Click" Padding="12,6"/>
+                  </Grid>
+                  <TextBlock x:Name="CaptureWarning" Visibility="Collapsed" Foreground="#E6B865" TextWrapping="Wrap" FontSize="11" Margin="0,8,0,0"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="2" Style="{StaticResource Card}">
+                <StackPanel>
+                  <TextBlock Text="최근 순간 보관" Style="{StaticResource SectionTitle}"/>
+                  <TextBlock Text="버퍼를 켜두면, 지나간 장면도 저장할 수 있습니다." Style="{StaticResource MutedText}"/>
+                  <TextBlock Text="보관할 길이" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,20,0,8"/>
+                  <ComboBox x:Name="ReplayBox" SelectedIndex="1">
+                    <ComboBoxItem Content="30초"/>
+                    <ComboBoxItem Content="1분"/>
+                    <ComboBoxItem Content="3분"/>
+                    <ComboBoxItem Content="5분"/>
+                  </ComboBox>
+                  <TextBlock x:Name="BufferTime" Text="00:00" FontSize="42" FontWeight="Light" Margin="0,15,0,0"/>
+                  <TextBlock x:Name="BufferDescription" Text="보관을 켜면 방금 순간을 저장할 수 있습니다" Style="{StaticResource MutedText}" FontSize="11"/>
+                  <Border Background="#11171F" CornerRadius="6" Padding="12,10" Margin="0,12,0,0">
+                    <StackPanel>
+                      <TextBlock x:Name="BufferCapacityText" Text="임시 저장 0 MB / 2 GB" FontSize="11" Foreground="#C0CBD5"/>
+                      <ProgressBar x:Name="BufferCapacityBar" Maximum="1" Height="4" Margin="0,8,0,7"/>
+                      <TextBlock x:Name="BufferHealthText" Text="저장한 클립은 자동 삭제하지 않습니다" FontSize="10" Foreground="{StaticResource Muted}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </Border>
+                  <Button x:Name="ReplayToggle" Content="최근 구간 보관 켜기" Click="ReplayToggle_Click" Margin="0,17,0,9"/>
+                  <Button x:Name="SaveReplayButton" Content="방금 순간 저장" Style="{StaticResource PrimaryButton}" Click="SaveReplay_Click" IsEnabled="False"/>
+                  <TextBlock x:Name="HotkeyHint" TextWrapping="Wrap" Text="Ctrl + Shift + F8" HorizontalAlignment="Center" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,10,0,0"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+            <Border Style="{StaticResource Card}" Margin="0,18,0,0">
+              <StackPanel>
+                <Grid>
+                  <TextBlock Text="소리 입력" Style="{StaticResource SectionTitle}"/>
+                  <Button x:Name="AudioTestButton" Content="입력 테스트" Click="AudioTest_Click" HorizontalAlignment="Right" Padding="12,5" Margin="0,-4,0,8"/>
+                </Grid>
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.55*"/>
+                    <ColumnDefinition Width="24"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+                  <StackPanel>
+                    <CheckBox x:Name="MicEnabled" Content="내 마이크 녹음"/>
+                    <ComboBox x:Name="MicBox" DisplayMemberPath="Name" Margin="0,4,0,0"/>
+                    <Grid Margin="0,4,0,0">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="50"/>
+                      </Grid.ColumnDefinitions>
+                      <Slider x:Name="MicGain" Minimum="0" Maximum="2" Value="1"/>
+                      <TextBlock Grid.Column="1" Text="{Binding ElementName=MicGain,Path=Value,StringFormat={}{0:P0}}" Foreground="{StaticResource Muted}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                    </Grid>
+                    <ProgressBar x:Name="MicLevel" Maximum="1"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2">
+                    <TextBlock Text="컴퓨터 소리" Margin="0,6,0,8"/>
+                    <ComboBox x:Name="AudioScopeBox" SelectedIndex="0" SelectionChanged="AudioScope_Changed">
+                      <ComboBoxItem Content="선택한 앱만"/>
+                      <ComboBoxItem Content="컴퓨터 전체 소리"/>
+                      <ComboBoxItem Content="컴퓨터 소리 제외"/>
+                    </ComboBox>
+                    <TextBlock Text="앱별 소리는 독립 트랙으로 저장됩니다." Style="{StaticResource MutedText}" FontSize="11" Margin="0,9,0,0"/>
+                  </StackPanel>
+                </Grid>
+                <ItemsControl x:Name="ApplicationsList" Margin="0,12,0,0">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Grid Margin="0,5">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="*"/>
+                          <ColumnDefinition Width="160"/>
+                          <ColumnDefinition Width="50"/>
+                          <ColumnDefinition Width="80"/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox Content="{Binding Name}" IsChecked="{Binding Enabled}"/>
+                        <Slider Grid.Column="1" Minimum="0" Maximum="2" Value="{Binding Gain}"/>
+                        <TextBlock Grid.Column="2" Text="{Binding Gain,StringFormat={}{0:P0}}" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource Muted}"/>
+                        <ProgressBar Grid.Column="3" Value="{Binding Peak}" Maximum="1" Margin="15,0,0,0" VerticalAlignment="Center"/>
+                      </Grid>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock x:Name="AudioHint" Text="앱에서 소리를 재생한 뒤 새로고침하면 목록에 나타납니다." Style="{StaticResource MutedText}" FontSize="11" Margin="0,8,0,0"/>
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Card}" Margin="0,18,0,8">
+              <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <StackPanel>
+                  <TextBlock Text="연속 녹화" FontSize="16" FontWeight="SemiBold"/>
+                  <TextBlock x:Name="RecordingDescription" Text="시작부터 끝까지 보관. 최근 구간 보관과 함께 사용할 수 있습니다." Style="{StaticResource MutedText}" FontSize="12" Margin="0,5,170,0"/>
+                </StackPanel>
+                <Button x:Name="RecordButton" Content="●  녹화 시작" Click="Record_Click" HorizontalAlignment="Right" VerticalAlignment="Center" Padding="22,12"/>
+                <DockPanel Grid.Row="1" Margin="0,14,0,0">
+                  <Button x:Name="MarkMomentButton" DockPanel.Dock="Right" Content="◆ 중요 순간 표시" Click="MarkMoment_Click" IsEnabled="False" Padding="10,7" FontSize="11"/>
+                  <TextBlock x:Name="MarkMomentHint" Text="Ctrl+Shift+F6" Foreground="{StaticResource Muted}" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                </DockPanel>
+              </Grid>
+            </Border>
+          </StackPanel>
+          <StackPanel x:Name="SettingsPage" Visibility="Collapsed">
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock Text="영상 품질" Style="{StaticResource SectionTitle}"/>
+                <WrapPanel Margin="0,0,0,14">
+                  <Button Content="가볍게 · 720p" Tag="light" Click="QualityPreset_Click" Padding="10,7" FontSize="11" ToolTip="720p · 30 FPS · 표준 화질"/>
+                  <Button Content="균형 · 1080p" Tag="balanced" Click="QualityPreset_Click" Padding="10,7" FontSize="11" Margin="6,0" ToolTip="1080p · 30 FPS · 표준 화질"/>
+                  <Button Content="게임 · 60 FPS" Tag="game" Click="QualityPreset_Click" Padding="10,7" FontSize="11" ToolTip="1080p · 60 FPS · 높은 화질"/>
+                </WrapPanel>
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+                  <StackPanel>
+                    <TextBlock Text="해상도" Foreground="{StaticResource Muted}" Margin="0,0,0,8"/>
+                    <ComboBox x:Name="ResolutionBox" SelectedIndex="1">
+                      <ComboBoxItem Content="720p"/>
+                      <ComboBoxItem Content="1080p"/>
+                    </ComboBox>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2">
+                    <TextBlock Text="프레임" Foreground="{StaticResource Muted}" Margin="0,0,0,8"/>
+                    <ComboBox x:Name="FpsBox" SelectedIndex="0">
+                      <ComboBoxItem Content="30 FPS"/>
+                      <ComboBoxItem Content="60 FPS"/>
+                    </ComboBox>
+                  </StackPanel>
+                  <StackPanel Grid.Column="4">
+                    <TextBlock Text="화질" Foreground="{StaticResource Muted}" Margin="0,0,0,8"/>
+                    <ComboBox x:Name="QualityBox" SelectedIndex="1">
+                      <ComboBoxItem Content="낮음"/>
+                      <ComboBoxItem Content="표준"/>
+                      <ComboBoxItem Content="높음"/>
+                    </ComboBox>
+                  </StackPanel>
+                </Grid>
+                <CheckBox x:Name="HideBorderCheck" Content="캡처 테두리 숨기기" IsChecked="True" Margin="0,16,0,4"/>
+                <CheckBox x:Name="CaptureCursorCheck" Content="마우스 커서 함께 녹화" IsChecked="True"/>
+                <TextBlock Text="Windows 권한이 허용되면 테두리를 숨깁니다. 다른 앱이 같은 화면을 캡처하면 테두리가 보일 수 있습니다." Style="{StaticResource MutedText}" FontSize="11" Margin="0,8,0,0"/>
+                <TextBlock Text="지원되는 하드웨어 인코더를 우선 사용합니다. 설정은 다음 기록부터 적용됩니다." Style="{StaticResource MutedText}" FontSize="12" Margin="0,14,0,0"/>
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Card}" Margin="0,18,0,0">
+              <StackPanel>
+                <TextBlock Text="저장 공간" Style="{StaticResource SectionTitle}"/>
+                <TextBlock Text="녹화 파일 저장 폴더" Foreground="{StaticResource Muted}" Margin="0,0,0,8"/>
+                <DockPanel>
+                  <Button Content="폴더 선택" DockPanel.Dock="Right" Click="BrowseOutput_Click" Margin="10,0,0,0"/>
+                  <TextBox x:Name="OutputPath"/>
+                </DockPanel>
+                <TextBlock Text="임시 버퍼 폴더" Foreground="{StaticResource Muted}" Margin="0,16,0,8"/>
+                <DockPanel>
+                  <Button Content="폴더 선택" DockPanel.Dock="Right" Click="BrowseBuffer_Click" Margin="10,0,0,0"/>
+                  <TextBox x:Name="BufferPath"/>
+                </DockPanel>
+                <Grid Margin="0,16,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="100"/>
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="임시 저장 한도 (GB)" VerticalAlignment="Center"/>
+                  <TextBox x:Name="BufferLimit" Grid.Column="1" Text="2"/>
+                </Grid>
+                <Button Content="중단된 연속 녹화 복구" Click="Recover_Click" HorizontalAlignment="Left" Margin="0,16,0,0"/>
+                <TextBlock Text="임시 조각만 순환 정리됩니다. 저장된 원본은 자동 삭제되지 않습니다." Style="{StaticResource MutedText}" FontSize="12" Margin="0,12,0,0"/>
+                <TextBlock Text="미리보기 캐시는 별도 512MB 기준으로 자동 정리합니다. 재생 중인 구간은 유지하며 원본은 건드리지 않습니다." Style="{StaticResource MutedText}" FontSize="11" Margin="0,8,0,0"/>
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Card}" Margin="0,18,0,0">
+              <StackPanel>
+                <TextBlock Text="단축키 · 시작 설정" Style="{StaticResource SectionTitle}"/>
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="230"/>
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="방금 순간 저장" VerticalAlignment="Center"/>
+                  <TextBox Grid.Column="1" x:Name="HotkeyText" Text="Ctrl+Shift+F8" IsReadOnly="True" PreviewKeyDown="Shortcut_KeyDown" GotKeyboardFocus="Shortcut_Focus" LostKeyboardFocus="Shortcut_Blur" ToolTip="클릭한 뒤 원하는 키 조합을 누르세요"/>
+                </Grid>
+                <Grid Margin="0,10,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="230"/>
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="녹화 시작 / 종료" VerticalAlignment="Center"/>
+                  <TextBox x:Name="RecordHotkeyText" Grid.Column="1" IsReadOnly="True" PreviewKeyDown="Shortcut_KeyDown" GotKeyboardFocus="Shortcut_Focus" LostKeyboardFocus="Shortcut_Blur" ToolTip="클릭한 뒤 원하는 키 조합을 누르세요"/>
+                </Grid>
+                <Grid Margin="0,10,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="230"/>
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="최근 구간 보관 켜기 / 끄기" VerticalAlignment="Center"/>
+                  <TextBox x:Name="BufferHotkeyText" Grid.Column="1" IsReadOnly="True" PreviewKeyDown="Shortcut_KeyDown" GotKeyboardFocus="Shortcut_Focus" LostKeyboardFocus="Shortcut_Blur" ToolTip="클릭한 뒤 원하는 키 조합을 누르세요"/>
+                </Grid>
+                <Grid Margin="0,10,0,0">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="230"/></Grid.ColumnDefinitions>
+                  <TextBlock Text="녹화 중 중요 순간 표시" VerticalAlignment="Center"/>
+                  <TextBox x:Name="BookmarkHotkeyText" Grid.Column="1" IsReadOnly="True" PreviewKeyDown="Shortcut_KeyDown" GotKeyboardFocus="Shortcut_Focus" LostKeyboardFocus="Shortcut_Blur" ToolTip="클릭한 뒤 원하는 키 조합을 누르세요"/>
+                </Grid>
+                <TextBlock Text="입력칸을 클릭하고 Ctrl·Alt·Shift 중 보조키와 원하는 키를 누르세요. 설정 저장 시 적용됩니다." Style="{StaticResource MutedText}" FontSize="12" Margin="0,12,0,0"/>
+                <TextBlock x:Name="ShortcutFeedback" Foreground="{StaticResource Accent}" FontSize="12" Margin="0,6,0,0"/>
+                <CheckBox x:Name="StartupCheck" Content="Windows 로그인 시 실행" Margin="0,18,0,5"/>
+                <CheckBox x:Name="AutoReplayCheck" Content="앱 실행 시 최근 구간 보관 자동 시작"/>
+                <TextBlock Text="자동 시작은 이전에 직접 선택한 음원·화면에서만 시도합니다. 대상을 찾지 못하면 시작하지 않습니다." Style="{StaticResource MutedText}" FontSize="12" Margin="0,8,0,0"/>
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource Card}" Margin="0,18,0,0">
+              <StackPanel>
+                <TextBlock Text="녹화 엔진" Style="{StaticResource SectionTitle}"/>
+                <TextBlock Text="FFmpeg 경로 (비워두면 자동 검색)" Foreground="{StaticResource Muted}" Margin="0,0,0,8"/>
+                <TextBox x:Name="FfmpegPathBox"/>
+                <TextBlock Text="FFprobe 경로" Foreground="{StaticResource Muted}" Margin="0,12,0,8"/>
+                <TextBox x:Name="FfprobePathBox"/>
+              </StackPanel>
+            </Border>
+            <Button Content="설정 저장" Style="{StaticResource PrimaryButton}" Click="SaveSettings_Click" HorizontalAlignment="Right" Padding="32,12" Margin="0,20,0,10"/>
+          </StackPanel>
+        </Grid>
+      </ScrollViewer>
+      <Grid x:Name="LibraryPage" Grid.Row="1" Visibility="Collapsed">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition x:Name="LibraryListColumn" Width="230"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Border x:Name="LibraryListPanel" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0" Margin="0,0,14,0" Padding="0,0,14,0">
+          <DockPanel>
+            <StackPanel DockPanel.Dock="Top">
+              <Grid Margin="0,0,0,12">
+                <TextBlock Text="내 기록" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <Button Content="↻" ToolTip="목록 새로고침" Click="LibraryRefresh_Click" HorizontalAlignment="Right" Padding="9,5"/>
+              </Grid>
+              <TextBox x:Name="LibrarySearch" TextChanged="LibrarySearch_Changed" ToolTip="제목 · 날짜 · 음원 이름으로 검색" AutomationProperties.Name="보관함 검색" Padding="10,8"/>
+              <TextBlock Text="제목 · 날짜 · 음원으로 검색" Foreground="{StaticResource Muted}" FontSize="10" Margin="2,4,0,8"/>
+              <ComboBox x:Name="LibraryFilter" SelectedIndex="0" SelectionChanged="LibraryFilter_Changed" AutomationProperties.Name="보관함 필터">
+                <ComboBoxItem Content="모든 기록"/>
+                <ComboBoxItem Content="★ 즐겨찾기"/>
+                <ComboBoxItem Content="화면 녹화"/>
+                <ComboBoxItem Content="음성 녹음"/>
+              </ComboBox>
+              <DockPanel Margin="0,8,0,4">
+                <Button DockPanel.Dock="Right" Content="저장 폴더" Click="OpenLibraryFolder_Click" Padding="6,3" FontSize="10"/>
+                <TextBlock x:Name="LibraryCount" Foreground="{StaticResource Muted}" FontSize="11" VerticalAlignment="Center"/>
+              </DockPanel>
+              <TextBlock x:Name="LibraryEmpty" Text="저장된 녹화가 없습니다." Style="{StaticResource MutedText}" Margin="0,8"/>
+            </StackPanel>
+            <ListBox x:Name="RecordingsList" SelectionChanged="Recording_Selected">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel>
+                    <DockPanel>
+                      <TextBlock DockPanel.Dock="Left" Text="★ " Foreground="#E6B865">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
+                      <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                    </DockPanel>
+                    <TextBlock Text="{Binding CreatedAt,StringFormat={}{0:MM.dd  HH:mm}}" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,8,0,0"/>
+                    <TextBlock Text="{Binding DurationSeconds,StringFormat={}{0:F1}초}" Foreground="{StaticResource Accent}" FontSize="11" Margin="0,4,0,0"/>
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </DockPanel>
+        </Border>
+        <StackPanel Grid.Column="1" x:Name="LibraryWelcome" VerticalAlignment="Center" HorizontalAlignment="Center">
+          <TextBlock Text="기록에서 클립으로" FontSize="24" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+          <TextBlock Text="왼쪽에서 기록을 골라 필요한 순간만 남기세요." Foreground="{StaticResource Muted}" Margin="0,12,0,4" HorizontalAlignment="Center"/>
+          <TextBlock Text="구간 자르기 · 음원별 볼륨 · 공유용 파일" Foreground="{StaticResource Muted}" FontSize="12" HorizontalAlignment="Center"/>
+          <Button Content="녹화 화면으로" Click="Home_Click" HorizontalAlignment="Center" Margin="0,24,0,0"/>
+        </StackPanel>
+        <Grid Grid.Column="1" x:Name="EditorPanel" IsEnabled="False" Visibility="Collapsed">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="232"/></Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*" MinHeight="50"/>
+            <RowDefinition Height="44"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+          <DockPanel Grid.ColumnSpan="3" Margin="0,0,0,14">
+            <StackPanel x:Name="RecordingActions" DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" Margin="10,0,0,0">
+              <Button x:Name="FavoriteButton" Content="☆" Click="Favorite_Click" Padding="11,8" ToolTip="즐겨찾기" AutomationProperties.Name="즐겨찾기"/>
+              <Button Content="···" Click="RecordingMenu_Click" Padding="12,8" Margin="6,0,10,0" ToolTip="이름 저장 · 폴더 · 삭제" AutomationProperties.Name="파일 메뉴">
+                <Button.ContextMenu><ContextMenu Background="{StaticResource Raised}" Foreground="{StaticResource Text}" BorderBrush="{StaticResource Line}">
+                  <MenuItem Header="이름 저장" Click="Rename_Click"/><MenuItem Header="저장 폴더 열기" Click="OpenRecordingFolder_Click"/>
+                  <Separator/><MenuItem Header="원본 삭제…" Click="Delete_Click" Foreground="#F2A5A5"/>
+                </ContextMenu></Button.ContextMenu>
+              </Button>
+              <Button x:Name="ExportButton" Content="공유 파일 만들기  ↗" Style="{StaticResource PrimaryButton}" Click="Export_Click" Padding="18,9"/>
+            </StackPanel>
+            <Button DockPanel.Dock="Left" Content="☰ 목록" Click="ToggleLibrary_Click" Padding="11,6" Margin="0,0,14,0" VerticalAlignment="Top"/>
+            <StackPanel>
+              <TextBox x:Name="RecordingTitle" Text="녹화를 선택하세요" FontSize="16" FontWeight="SemiBold" Padding="0,2" Background="Transparent" BorderThickness="0" KeyDown="RecordingTitle_KeyDown" ToolTip="제목을 수정한 뒤 Enter로 저장"/>
+              <TextBlock x:Name="RecordingMetadata" Text="원본 파일은 편집 후에도 보존됩니다" TextTrimming="CharacterEllipsis" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,5,0,0"/>
+            </StackPanel>
+          </DockPanel>
+          <Border x:Name="EditorPreview" Grid.Row="1" Background="#070B10" BorderBrush="#26313C" BorderThickness="1" ClipToBounds="True">
+            <Grid>
+              <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Close" ScrubbingEnabled="True" Stretch="Uniform" MediaOpened="Player_Opened" MediaFailed="Player_Failed" MediaEnded="Player_Ended"/>
+              <StackPanel x:Name="EditorPlaceholder" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="▶" FontSize="32" Foreground="#526777" HorizontalAlignment="Center"/>
+                <TextBlock x:Name="PreviewMessage" Text="녹화를 선택하면 미리보기를 준비합니다" Foreground="{StaticResource Muted}" Margin="0,12,0,0"/>
+              </StackPanel>
+              <Border HorizontalAlignment="Left" VerticalAlignment="Top" Background="#CF111921" Margin="12" Padding="9,5">
+                <TextBlock x:Name="PreviewDetail" Text="빠른 미리보기 · 내보내기는 원본 기준" Foreground="#B2C2CC" FontSize="10"/>
+              </Border>
+            </Grid>
+          </Border>
+          <Grid Grid.Row="2" Grid.ColumnSpan="3">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="PlaybackClock" Text="00:00.00 / 00:00.00" FontFamily="Consolas" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+              <Button Content="−5초" Click="Back_Click" Padding="10,5" ToolTip="왼쪽 방향키"/>
+              <Button x:Name="PlayButton" Content="▶  재생" Click="Play_Click" Padding="18,5" Margin="6,0" ToolTip="Space · 재생 / 일시정지"/>
+              <Button Content="+5초" Click="Forward_Click" Padding="10,5" ToolTip="오른쪽 방향키"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+              <CheckBox x:Name="LoopSelection" Content="구간 반복" Margin="0,0,12,0" FontSize="11"/>
+              <Button Content="−" Click="ZoomOut_Click" Padding="9,4" ToolTip="시간축 축소"/>
+              <Button Content="전체" Click="FitTimeline_Click" Padding="9,4" Margin="5,0"/>
+              <Button Content="+" Click="ZoomIn_Click" Padding="9,4" ToolTip="시간축 확대 · 마우스 휠"/>
+            </StackPanel>
+          </Grid>
+          <StackPanel Grid.Row="3" Grid.ColumnSpan="3">
+            <Grid Margin="0,0,0,8">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+              <WrapPanel VerticalAlignment="Center">
+                <Button Content="시작점  I" Click="MarkIn_Click" Padding="10,5" ToolTip="재생 위치를 시작점으로"/>
+                <TextBox x:Name="TrimStart" Text="0" Width="78" Margin="6,0,10,0" Padding="7,4" LostKeyboardFocus="Trim_LostFocus" ToolTip="시작 시간 (초)"/>
+                <Button Content="끝점  O" Click="MarkOut_Click" Padding="10,5" ToolTip="재생 위치를 끝점으로"/>
+                <TextBox x:Name="TrimEnd" Text="0" Width="78" Margin="6,0,10,0" Padding="7,4" LostKeyboardFocus="Trim_LostFocus" ToolTip="끝 시간 (초)"/>
+                <TextBlock x:Name="SelectionSummary" Text="선택 00:00" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+              </WrapPanel>
+              <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="되돌리기" Click="UndoTrim_Click" Padding="9,5" ToolTip="Ctrl+Z · 구간 변경 취소"/>
+                <Button Content="초기화" Click="ResetTrim_Click" Padding="9,5" Margin="6,0,0,0"/>
+              </StackPanel>
+            </Grid>
+            <DockPanel Margin="0,0,0,7">
+              <Button DockPanel.Dock="Right" Click="SaveDraft_Click" Padding="4,0" Background="Transparent" BorderBrush="Transparent" VerticalAlignment="Center" ToolTip="편집 정보 저장 · 실패 시 클릭하여 재시도">
+                <TextBlock x:Name="DraftStatus" Text="편집 내용 자동 저장" Foreground="{StaticResource Muted}" FontSize="10"/>
+              </Button>
+              <StackPanel Orientation="Horizontal">
+                <Button Content="◆ 표시  M" Click="Bookmark_Click" Padding="8,4" FontSize="11" ToolTip="현재 위치에 중요 지점 추가 · 같은 위치에서 다시 누르면 제거"/>
+                <TextBlock x:Name="BookmarkCount" Text="중요 지점" Foreground="{StaticResource Muted}" FontSize="11" VerticalAlignment="Center" Margin="12,0,8,0"/>
+                <Button x:Name="PreviousBookmark" Content="‹" Click="PreviousBookmark_Click" Padding="9,3" Margin="0,0,4,0" ToolTip="이전 중요 지점" AutomationProperties.Name="이전 중요 지점"/>
+                <Grid Width="130">
+                  <ComboBox x:Name="BookmarkList" MinHeight="30" DisplayMemberPath="Label" SelectionChanged="Bookmark_Selected" Padding="6,3" ToolTip="중요 지점으로 이동" AutomationProperties.Name="중요 지점 목록"/>
+                  <TextBlock Text="지점으로 이동" Margin="11,0,28,0" VerticalAlignment="Center" FontSize="11" IsHitTestVisible="False" Foreground="{StaticResource Muted}">
+                    <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SelectedIndex, ElementName=BookmarkList}" Value="-1"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                  </TextBlock>
+                </Grid>
+                <Button x:Name="NextBookmark" Content="›" Click="NextBookmark_Click" Padding="9,3" Margin="4,0,0,0" ToolTip="다음 중요 지점" AutomationProperties.Name="다음 중요 지점"/>
+              </StackPanel>
+            </DockPanel>
+            <controls:ClipTimeline x:Name="Timeline" Height="140" AutomationProperties.Name="클립 시간축" ToolTip="클릭: 탐색 · 손잡이: 자르기 · 휠: 확대/축소 · Shift+드래그: 구간 이동"/>
+          </StackPanel>
+          <Border x:Name="MixerExportPanel" Grid.Row="1" Grid.Column="2" Background="#181F27" BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="16,14">
+            <Grid>
+              <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+              <StackPanel>
+                <TextBlock Text="소리 조정" FontSize="16" FontWeight="SemiBold"/>
+                <TextBlock Text="공유에 담을 소리만 켜세요" FontSize="11" Foreground="{StaticResource Muted}" Margin="0,5,0,12"/>
+              </StackPanel>
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                  <ItemsControl x:Name="ExportTracks" Margin="0,4,0,0">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border BorderBrush="#303946" BorderThickness="0,0,0,1" Padding="0,0,0,10" Margin="0,0,0,12">
+                          <StackPanel>
+                            <CheckBox IsChecked="{Binding Enabled}" Margin="0"><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" MaxWidth="168" ToolTip="{Binding Name}"/></CheckBox>
+                            <Grid Margin="0,7,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="40"/></Grid.ColumnDefinitions>
+                              <Slider Minimum="0" Maximum="2" Value="{Binding Gain}" Margin="0,3,8,3" AutomationProperties.Name="{Binding Name}"/>
+                              <TextBlock Grid.Column="1" Text="{Binding Gain,StringFormat={}{0:P0}}" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{StaticResource Muted}" FontSize="11"/>
+                            </Grid>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+              <StackPanel Grid.Row="2" Margin="0,8,0,0">
+                <Button x:Name="ApplyMixButton" Content="소리 적용하고 듣기" Click="RenderPreview_Click" Padding="10,7" FontSize="11" ToolTip="선택 음원과 음량을 미리보기에 반영"/>
+                <TextBlock x:Name="PlaybackHint" Text="원본의 음원은 그대로 유지됩니다" Foreground="{StaticResource Muted}" FontSize="10" TextWrapping="Wrap" Margin="0,9,0,0"/>
+              </StackPanel>
+            </Grid>
+          </Border>
+        </Grid>
+      </Grid>
+      <StackPanel Grid.Row="2">
+        <Border x:Name="SavedFileBanner" Visibility="Collapsed" Background="#18372F" BorderBrush="#315E4D" BorderThickness="1" Padding="12,8" Margin="0,8,0,0">
+          <DockPanel>
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+              <Button x:Name="SavedOpenButton" Content="편집 열기" Click="SavedOpen_Click" Padding="10,5"/>
+              <Button x:Name="CopySavedButton" Content="파일 복사" Click="CopySavedFile_Click" Padding="10,5" Margin="6,0,0,0"/>
+              <Button Content="×" Click="DismissSaved_Click" Padding="8,5" Margin="6,0,0,0" ToolTip="저장 알림 닫기"/>
+            </StackPanel>
+            <TextBlock x:Name="SavedFileTitle" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Foreground="#B9F0D9" Margin="0,0,12,0"/>
+          </DockPanel>
+        </Border>
+        <Border BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Margin="0,10,0,0" Padding="0,7,0,0">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="StatusText" Text="설정을 확인하고 첫 기록을 시작하세요." Foreground="{StaticResource Muted}" TextWrapping="Wrap" MaxHeight="60"/>
+            <TextBlock Grid.Column="1" x:Name="SessionClock" Text="00:00:00" Foreground="{StaticResource Accent}" FontFamily="Consolas" Margin="15,0,0,0"/>
+          </Grid>
+        </Border>
+      </StackPanel>
+    </Grid>
+  </Grid>
+</Window>

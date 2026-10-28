@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../../src/VideoView.Platform/VideoView.Platform.csproj" /></ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../src/VideoView.App/DesktopIntegration.cs" Link="DesktopIntegration.cs" />
+    <Compile Include="../../src/VideoView.App/Controls/ClipTimeline.cs" Link="ClipTimeline.cs" />
+  </ItemGroup>
+</Project>

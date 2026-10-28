@@ -1,0 +1,203 @@
+<Window x:Class="VideoView.App.ShareWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="공유 파일 만들기 · VideoView" Width="520" Height="790"
+        Style="{StaticResource {x:Type Window}}" Background="{StaticResource Background}" Foreground="{StaticResource Text}"
+        MinWidth="440" MinHeight="480" WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False" ResizeMode="CanResize" UseLayoutRounding="True"
+        AutomationProperties.Name="공유 파일 만들기" PreviewKeyDown="Window_KeyDown">
+  <Window.Resources>
+    <Style x:Key="ShareButton" TargetType="Button">
+      <Setter Property="Background" Value="{StaticResource Raised}"/>
+      <Setter Property="Foreground" Value="{StaticResource Text}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="14,11"/>
+      <Setter Property="MinHeight" Value="42"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Body" CornerRadius="7" Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="Center" RecognizesAccessKey="True"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Body" Property="BorderBrush" Value="{StaticResource Accent}"/></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Body" Property="BorderBrush" Value="{StaticResource Accent}"/><Setter TargetName="Body" Property="BorderThickness" Value="2"/></Trigger>
+              <Trigger Property="IsPressed" Value="True"><Setter TargetName="Body" Property="Opacity" Value="0.7"/></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Body" Property="Opacity" Value="0.4"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="SharePrimary" TargetType="Button" BasedOn="{StaticResource ShareButton}">
+      <Setter Property="Background" Value="{StaticResource Accent}"/>
+      <Setter Property="Foreground" Value="#10251D"/>
+      <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+    </Style>
+    <Style x:Key="ShareChoice" TargetType="RadioButton">
+      <Setter Property="Foreground" Value="{StaticResource Text}"/>
+      <Setter Property="Background" Value="{StaticResource Panel}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource Line}"/>
+      <Setter Property="Padding" Value="12,11"/>
+      <Setter Property="MinHeight" Value="42"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Body" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True"><Setter TargetName="Body" Property="Background" Value="#213D33"/><Setter TargetName="Body" Property="BorderBrush" Value="{StaticResource Accent}"/><Setter Property="Foreground" Value="{StaticResource Accent}"/><Setter Property="FontWeight" Value="SemiBold"/></Trigger>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Body" Property="BorderBrush" Value="{StaticResource Accent}"/></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Body" Property="BorderThickness" Value="2"/><Setter TargetName="Body" Property="BorderBrush" Value="{StaticResource Accent}"/></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Body" Property="Opacity" Value="0.4"/></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="ShareHelp" TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
+      <Setter Property="FontSize" Value="12"/><Setter Property="LineHeight" Value="18"/>
+    </Style>
+  </Window.Resources>
+
+  <Grid x:Name="Root" Background="{StaticResource Background}">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <StackPanel Margin="24,20,24,15">
+      <Grid>
+        <TextBlock Text="VIDEOVIEW  /  SHARE" Foreground="{StaticResource Accent}" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+        <TextBlock x:Name="StepLabel" Text="01 — 공유 대상" Foreground="{StaticResource Muted}" FontSize="11" HorizontalAlignment="Right"/>
+      </Grid>
+      <TextBlock x:Name="Heading" Text="이 순간을 나누세요" FontSize="26" FontWeight="Bold" Margin="0,12,0,5"/>
+      <TextBlock x:Name="Subheading" Text="필요한 구간만, 보내기 편한 크기로." Style="{StaticResource ShareHelp}"/>
+      <Border x:Name="SmokeBanner" Visibility="Collapsed" Background="#4A3924" CornerRadius="4" Margin="0,8,0,0" Padding="8,4">
+        <TextBlock Text="CLI 화면 검사 · 예시 상태 · 실제 파일 생성 없음" Foreground="#FFD598" FontSize="11" TextWrapping="Wrap"/>
+      </Border>
+    </StackPanel>
+
+    <ScrollViewer x:Name="ContentScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="24,0,24,16">
+      <StackPanel>
+        <Border x:Name="HeroCard" CornerRadius="9" BorderBrush="{StaticResource Line}" BorderThickness="1" Background="{StaticResource Panel}">
+          <StackPanel>
+            <Grid x:Name="HeroVisual" Height="182" ClipToBounds="True" Background="#0C1015">
+              <StackPanel x:Name="ThumbnailPlaceholder" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="12">
+                <TextBlock x:Name="PlaceholderGlyph" Text="&#xE714;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="36" Foreground="{StaticResource Accent}" HorizontalAlignment="Center"/>
+                <TextBlock x:Name="PlaceholderLabel" Text="선택 구간 미리보기" FontSize="13" Foreground="{StaticResource Muted}" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+              </StackPanel>
+              <Image x:Name="ThumbnailImage" Stretch="Uniform" AutomationProperties.Name="선택 구간의 정지 이미지"/>
+              <Border Background="#DD101318" CornerRadius="4" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10" Padding="8,4">
+                <TextBlock x:Name="DurationBadge" Foreground="White" FontWeight="SemiBold" FontSize="12"/>
+              </Border>
+              <Border x:Name="ReadyBadge" Visibility="Collapsed" Background="{StaticResource Accent}" CornerRadius="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10" Padding="8,4">
+                <TextBlock Text="✓  파일 완성" Foreground="#10251D" FontWeight="SemiBold" FontSize="11"/>
+              </Border>
+              <Button x:Name="DragSurface" Visibility="Collapsed" Background="Transparent" BorderBrush="Transparent"
+                      Style="{StaticResource ShareButton}" Content="" Cursor="Hand"
+                      AutomationProperties.Name="완성 파일 복사. 마우스로 끌어놓기도 가능"
+                      ToolTip="끌어서 첨부 · 클릭 또는 Enter로 파일 복사"
+                      PreviewMouseLeftButtonDown="Drag_MouseDown" PreviewMouseMove="Drag_MouseMove" Click="Copy_Click"/>
+            </Grid>
+            <StackPanel Margin="14,11,14,12">
+              <TextBlock x:Name="ClipTitle" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis"/>
+              <TextBlock x:Name="ClipRange" Style="{StaticResource ShareHelp}" Margin="0,4,0,0"/>
+              <TextBlock x:Name="ResultSize" Visibility="Collapsed" Foreground="{StaticResource Accent}" Margin="0,5,0,0" FontWeight="SemiBold" TextWrapping="Wrap"/>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <StackPanel x:Name="DestinationPanel" Margin="0,20,0,0">
+          <TextBlock Text="어디에 공유할까요?" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,10"/>
+          <RadioButton x:Name="DiscordDestination" GroupName="Destination" Tag="discord" Style="{StaticResource ShareChoice}"
+                       HorizontalContentAlignment="Stretch" IsChecked="True" Checked="Destination_Changed" AutomationProperties.Name="Discord에 첨부할 파일 만들기" Margin="0,0,0,8">
+            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="38"/><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/></Grid.ColumnDefinitions>
+              <TextBlock Text="&#xE8F2;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="22" VerticalAlignment="Center"/>
+              <StackPanel Grid.Column="1"><TextBlock Text="Discord" FontSize="15" FontWeight="SemiBold"/><TextBlock Text="완성 파일을 채팅에 끌어놓기" Style="{StaticResource ShareHelp}" Margin="0,3,0,0"/></StackPanel>
+              <TextBlock Grid.Column="2" Text="›" FontSize="23" VerticalAlignment="Center"/>
+            </Grid>
+          </RadioButton>
+          <RadioButton x:Name="FileDestination" GroupName="Destination" Tag="file" Style="{StaticResource ShareChoice}"
+                       HorizontalContentAlignment="Stretch" Checked="Destination_Changed" AutomationProperties.Name="파일로 저장">
+            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="38"/><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/></Grid.ColumnDefinitions>
+              <TextBlock Text="&#xE8B7;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="22" VerticalAlignment="Center"/>
+              <StackPanel Grid.Column="1"><TextBlock Text="파일로 저장" FontSize="15" FontWeight="SemiBold"/><TextBlock Text="내 컴퓨터에 보관하고 원하는 곳에 첨부" Style="{StaticResource ShareHelp}" Margin="0,3,0,0"/></StackPanel>
+              <TextBlock Grid.Column="2" Text="›" FontSize="23" VerticalAlignment="Center"/>
+            </Grid>
+          </RadioButton>
+          <TextBlock Text="파일은 내 컴퓨터에서 만들어집니다. 첨부와 전송은 직접 진행하세요." Style="{StaticResource ShareHelp}" Margin="0,12,0,0"/>
+        </StackPanel>
+
+        <StackPanel x:Name="SizePanel" Visibility="Collapsed" Margin="0,16,0,0">
+          <TextBlock Text="파일 크기 상한" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,9"/>
+          <UniformGrid Columns="5">
+            <RadioButton x:Name="Size10" GroupName="Size" Tag="10" Content="10 MB" Style="{StaticResource ShareChoice}" Padding="3,10" Margin="0,0,4,0" Checked="Size_Changed" AutomationProperties.Name="최대 10 MB"/>
+            <RadioButton x:Name="Size20" GroupName="Size" Tag="20" Content="20 MB" Style="{StaticResource ShareChoice}" Padding="3,10" Margin="0,0,4,0" Checked="Size_Changed" AutomationProperties.Name="최대 20 MB"/>
+            <RadioButton x:Name="Size50" GroupName="Size" Tag="50" Content="50 MB" Style="{StaticResource ShareChoice}" Padding="3,10" Margin="0,0,4,0" Checked="Size_Changed" AutomationProperties.Name="최대 50 MB"/>
+            <RadioButton x:Name="Size100" GroupName="Size" Tag="100" Content="100 MB" Style="{StaticResource ShareChoice}" Padding="3,10" Margin="0,0,4,0" Checked="Size_Changed" AutomationProperties.Name="최대 100 MB"/>
+            <RadioButton x:Name="SizeCustom" GroupName="Size" Tag="custom" Content="직접" Style="{StaticResource ShareChoice}" Padding="3,10" Checked="Size_Changed" AutomationProperties.Name="파일 크기 직접 입력"/>
+          </UniformGrid>
+          <Grid x:Name="CustomSizeRow" Visibility="Collapsed" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <TextBox x:Name="CustomSize" TextChanged="CustomSize_Changed" AutomationProperties.Name="목표 용량, 1에서 10000 MB" MaxLength="5"/>
+            <TextBlock Grid.Column="1" Text="MB  ·  1–10,000" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+          </Grid>
+          <TextBlock x:Name="SizeValidation" Visibility="Collapsed" Text="1~10,000 사이의 정수를 입력하세요." Foreground="#FFB6A8" FontSize="12" Margin="0,6,0,0"/>
+          <UniformGrid Columns="2" Margin="0,12,0,0">
+            <RadioButton x:Name="VideoFormat" GroupName="Format" Tag="video" Content="영상 · MP4" Style="{StaticResource ShareChoice}" Margin="0,0,4,0" Checked="Format_Changed" AutomationProperties.Name="영상 MP4로 만들기"/>
+            <RadioButton x:Name="AudioFormat" GroupName="Format" Tag="audio" Content="음성만 · M4A" Style="{StaticResource ShareChoice}" Margin="4,0,0,0" Checked="Format_Changed" AutomationProperties.Name="음성 M4A로 만들기"/>
+          </UniformGrid>
+          <TextBlock x:Name="QualityGuidance" Style="{StaticResource ShareHelp}" Margin="0,10,0,0"/>
+          <TextBlock x:Name="MixSummary" Style="{StaticResource ShareHelp}" Margin="0,5,0,0"/>
+          <Border Background="{StaticResource Panel}" CornerRadius="6" Padding="11" Margin="0,12,0,0">
+            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <StackPanel VerticalAlignment="Center"><TextBlock Text="저장 위치" Foreground="{StaticResource Muted}" FontSize="11"/><TextBlock x:Name="FolderLabel" TextTrimming="CharacterEllipsis" FontSize="12" Margin="0,4,8,0"/></StackPanel>
+              <Button Grid.Column="1" Content="변경" Style="{StaticResource ShareButton}" Padding="10,5" MinHeight="34" Click="Folder_Click" AutomationProperties.Name="공유 파일 저장 폴더 변경"/>
+            </Grid>
+          </Border>
+          <TextBlock x:Name="DestinationNote" Style="{StaticResource ShareHelp}" Margin="0,10,0,0"/>
+        </StackPanel>
+
+        <StackPanel x:Name="ProgressPanel" Visibility="Collapsed" Margin="0,23,0,0">
+          <Grid><TextBlock Text="공유 파일 만드는 중" FontSize="17" FontWeight="SemiBold"/><TextBlock x:Name="ProgressPercent" Text="0%" HorizontalAlignment="Right" Foreground="{StaticResource Accent}" FontSize="17" FontWeight="SemiBold"/></Grid>
+          <ProgressBar x:Name="ExportProgress" Minimum="0" Maximum="100" Height="7" Margin="0,14,0,12" AutomationProperties.Name="공유 파일 생성 진행률"/>
+          <TextBlock x:Name="ProgressDetail" Style="{StaticResource ShareHelp}"/>
+          <TextBlock Text="원본은 그대로 보관됩니다. 취소하면 작업 중인 임시 파일을 정리합니다." Style="{StaticResource ShareHelp}" Margin="0,16,0,0"/>
+        </StackPanel>
+
+        <StackPanel x:Name="ReadyPanel" Visibility="Collapsed" Margin="0,18,0,0">
+          <TextBlock x:Name="ReadyInstruction" Text="위 클립을 채팅에 끌어놓으세요" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
+          <TextBlock x:Name="ReadyHelp" Text="파일 복사 후 Ctrl+V로 붙여넣어도 됩니다. 전송 전 첨부 내용을 확인하세요." Style="{StaticResource ShareHelp}" Margin="0,7,0,13"/>
+          <Button x:Name="OpenFolderButton" Content="저장 폴더 열기  ↗" Style="{StaticResource ShareButton}" Click="OpenFolder_Click" AutomationProperties.Name="완성 파일이 있는 폴더 열기"/>
+          <Button Content="다른 크기로 만들기" Style="{StaticResource ShareButton}" Background="Transparent" BorderBrush="Transparent" Margin="0,7,0,0" Click="ChangeSize_Click" AutomationProperties.Name="기존 파일을 보존하고 다른 크기로 만들기"/>
+        </StackPanel>
+
+        <Border x:Name="ErrorPanel" Visibility="Collapsed" Background="#352A29" BorderBrush="#79524A" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,14,0,0">
+          <StackPanel><TextBlock x:Name="ErrorText" TextWrapping="Wrap" Foreground="#FFB6A8" AutomationProperties.LiveSetting="Assertive"/>
+            <Expander x:Name="ErrorDetailsExpander" Header="자세히 보기" Foreground="{StaticResource Muted}" Margin="0,8,0,0"><TextBox x:Name="ErrorDetails" IsReadOnly="True" TextWrapping="Wrap" MaxHeight="110" VerticalScrollBarVisibility="Auto" FontSize="11" AutomationProperties.Name="오류 상세 내용"/></Expander>
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </ScrollViewer>
+
+    <Border x:Name="Footer" Grid.Row="2" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Background="{StaticResource Panel}" Padding="24,12,24,16">
+      <StackPanel>
+        <TextBlock x:Name="FooterHint" Text="01  대상 선택    /    02  크기 설정    /    03  파일 전달" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,10" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+          <Button x:Name="BackButton" Content="닫기" Style="{StaticResource ShareButton}" MinWidth="74" Margin="0,0,9,0" Click="Back_Click" AutomationProperties.Name="공유 창 닫기 또는 이전 단계"/>
+          <Button x:Name="PrimaryButton" Grid.Column="1" Content="계속" Style="{StaticResource SharePrimary}" Click="Primary_Click" AutomationProperties.Name="다음 공유 단계"/>
+        </Grid>
+      </StackPanel>
+    </Border>
+  </Grid>
+</Window>
