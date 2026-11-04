@@ -37,7 +37,7 @@ public partial class ShareWindow : Window
     private Task _exportTask = Task.CompletedTask;
     private Task? _closeTask;
     private bool _initialized, _closing, _allowClose, _closed, _audioOnly, _sizeValid = true, _dragging;
-    private bool _loaded, _smokeStarted;
+    private bool _loaded, _smokeStarted, _smokeSoundOptions;
     private int _thumbnailGeneration;
     private ShareStage _stage;
     private string _folder;
@@ -98,7 +98,7 @@ public partial class ShareWindow : Window
     }
 
     /// <summary>CLI-only visual fixtures. No media is encoded and no synthetic result is exposed as a file.</summary>
-    public void ConfigureSmoke(string stage, string absolutePngPath)
+    public void ConfigureSmoke(string stage, string absolutePngPath, bool soundOptions = false)
     {
         if (!_smoke) throw new InvalidOperationException("화면 검사는 smoke 모드에서만 사용할 수 있습니다.");
         if (stage is not ("destination" or "size" or "progress" or "ready"))
@@ -107,6 +107,7 @@ public partial class ShareWindow : Window
             throw new ArgumentException("화면 검사 출력은 PNG 절대 경로여야 합니다.", nameof(absolutePngPath));
         if (_smokeStarted || _closing) throw new InvalidOperationException("화면 검사가 이미 시작되었습니다.");
         _smokeStage = stage; _smokePath = Path.GetFullPath(absolutePngPath);
+        _smokeSoundOptions = soundOptions;
         if (_loaded) _ = RenderSmokeAsync();
     }
 
@@ -145,6 +146,7 @@ public partial class ShareWindow : Window
         DragSurface.IsEnabled = !_smoke && ExportedPath != null;
         ResultSize.Visibility = stage == ShareStage.Ready ? Visibility.Visible : Visibility.Collapsed;
         HeroVisual.Height = stage == ShareStage.Size ? 125 : stage == ShareStage.Ready ? 210 : 182;
+        HeroVisual.Visibility = stage is ShareStage.Size or ShareStage.Progress ? Visibility.Collapsed : Visibility.Visible;
         BackButton.IsEnabled = true; PrimaryButton.IsEnabled = true;
         HideError(); ContentScroll.ScrollToTop();
         var discord = DiscordDestination.IsChecked == true;
@@ -160,7 +162,6 @@ public partial class ShareWindow : Window
                 Subheading.Text = "크기를 고르면 선택한 구간과 소리를 담아 만듭니다.";
                 StepLabel.Text = "02 — 크기 설정"; BackButton.Content = "뒤로";
                 UpdateOptions();
-                FooterHint.Text = "원본 보존 · 선택 구간과 현재 음량 적용";
                 break;
             case ShareStage.Progress:
                 Heading.Text = "순간을 담는 중"; Subheading.Text = "크기 상한에 맞춰 파일을 만들고 확인합니다.";
@@ -206,6 +207,9 @@ public partial class ShareWindow : Window
     private void Format_Changed(object sender, RoutedEventArgs e)
     { if (_initialized) { _audioOnly = AudioFormat.IsChecked == true; UpdateOptions(); } }
 
+    private void Normalization_Changed(object sender, RoutedEventArgs e)
+    { if (_initialized) UpdateOptions(); }
+
     private void UpdateOptions()
     {
         if (!_initialized) return;
@@ -214,6 +218,10 @@ public partial class ShareWindow : Window
         if (_sizeValid && SizeCustom.IsChecked == true) SelectedTargetMegabytes = int.Parse(CustomSize.Text.Trim(), CultureInfo.InvariantCulture);
         SizeValidation.Visibility = _sizeValid ? Visibility.Collapsed : Visibility.Visible;
         var included = _tracks.Where(t => t.Included).ToArray();
+        NormalizeAudioCheck.IsEnabled = included.Any(track => track.Gain > 0);
+        NormalizationHint.Text = !NormalizeAudioCheck.IsEnabled ? "선택한 소리가 없거나 모두 0%입니다. 무음은 보정하지 않습니다."
+            : NormalizeAudioCheck.IsChecked != true ? "편집기에서 정한 음량으로 만듭니다. 자동 증폭은 적용하지 않습니다."
+            : "작은 소리는 키우고 큰 소리는 줄입니다. 원본·미리듣기 음량은 그대로입니다.";
         var trackNames = included.Select(t =>
             $"{_recording.Tracks.FirstOrDefault(info => info.Index == t.Index)?.Name ?? $"음원 {t.Index + 1}"} {t.Gain * 100:0}%");
         MixSummary.Text = included.Length == 0 ? "음원 제외 · 무음 영상" : $"{included.Length}개 음원 믹스 · {string.Join(" / ", trackNames)}";
@@ -233,6 +241,8 @@ public partial class ShareWindow : Window
             : "선택한 크기 이하로 별도 파일을 만듭니다. 원본 영상과 분리 음원은 그대로 보관됩니다.";
         if (_stage == ShareStage.Size)
         {
+            FooterHint.Text = NormalizeAudioCheck.IsEnabled && NormalizeAudioCheck.IsChecked == true
+                ? "원본 보존 · 공유 파일 음량 자동 보정" : "원본 보존 · 편집기 음량 적용";
             PrimaryButton.Content = $"{(_audioOnly ? "M4A" : "MP4")} 파일 만들기";
             PrimaryButton.IsEnabled = _sizeValid && feasible && !_closing;
             AutomationProperties.SetName(PrimaryButton, PrimaryButton.Content.ToString());
@@ -261,21 +271,27 @@ public partial class ShareWindow : Window
         _exportCancellation = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
         var cancellation = _exportCancellation;
         var target = SelectedTargetMegabytes; var audioOnly = _audioOnly;
+        var normalize = NormalizeAudioCheck.IsChecked == true && NormalizeAudioCheck.IsEnabled;
         string? generatedPath = null;
         ShowStage(ShareStage.Progress); ExportProgress.Value = 0; ProgressPercent.Text = "0%";
-        ProgressDetail.Text = $"{Time(_end - _start)} · {(audioOnly ? "M4A" : "MP4")} · 최대 {target:N0} MB";
+        var encodingDetail = $"{Time(_end - _start)} · {(audioOnly ? "M4A" : "MP4")} · 최대 {target:N0} MB";
+        ProgressDetail.Text = normalize ? "선택 구간의 음량을 분석하는 중…" : encodingDetail;
         try
         {
             var path = NewOutputPath(audioOnly);
-            var request = new ExportRequest(_recording, _start, _end, audioOnly, target, _tracks, path);
+            var request = new ExportRequest(_recording, _start, _end, audioOnly, target, _tracks, path, normalize);
             var progress = new Progress<double>(value =>
             {
                 if (_closing || cancellation.IsCancellationRequested || _stage != ShareStage.Progress) return;
                 var percent = Math.Min(99, (int)Math.Floor(Math.Clamp(value, 0, 1) * 100));
                 ExportProgress.Value = percent; ProgressPercent.Text = $"{percent}%";
                 if (value >= .99) ProgressDetail.Text = "파일 크기와 재생 정보를 확인하는 중…";
+                else if (!normalize || value >= .15) ProgressDetail.Text = encodingDetail;
             });
-            var result = await new ExportService(_tools).ExportAsync(request, progress, cancellation.Token);
+            var export = await new ExportService(_tools).ExportDetailedAsync(request, progress: progress, cancellationToken: cancellation.Token);
+            var result = export.Path;
+            NormalizationResultText.Text = (export.Normalization?.Description ?? "자동 보정 없이 편집기 음량으로 만들었습니다.") +
+                (normalize ? "\n완성 파일은 낮은 재생 음량부터 확인하세요." : "");
             generatedPath = result;
             var file = new FileInfo(result);
             if (!file.Exists || file.Length <= 0 || file.Length > (long)target * 1_000_000)
@@ -574,17 +590,26 @@ public partial class ShareWindow : Window
             await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Loaded);
             await Task.Delay(120, _lifetime.Token);
             UpdateLayout();
+            if (_smokeSoundOptions && _stage == ShareStage.Size)
+            {
+                ((FrameworkElement)NormalizeAudioCheck.Parent).BringIntoView();
+                await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.Render);
+                UpdateLayout();
+            }
             var bitmap = new RenderTargetBitmap((int)Math.Ceiling(Root.ActualWidth), (int)Math.Ceiling(Root.ActualHeight), 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(Root);
             var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
             Directory.CreateDirectory(Path.GetDirectoryName(_smokePath)!);
             using (var file = File.Create(_smokePath)) png.Save(file);
             var footer = Footer.TransformToAncestor(Root).TransformBounds(new Rect(0, 0, Footer.ActualWidth, Footer.ActualHeight));
+            var sound = NormalizeAudioCheck.TransformToAncestor(ContentScroll).TransformBounds(new Rect(0, 0, NormalizeAudioCheck.ActualWidth, NormalizeAudioCheck.ActualHeight));
             await File.WriteAllTextAsync(_smokePath + ".layout.json", System.Text.Json.JsonSerializer.Serialize(new
             {
                 Stage = _smokeStage, Width = Root.ActualWidth, Height = Root.ActualHeight,
                 FooterVisible = footer.Top >= 0 && footer.Bottom <= Root.ActualHeight + 1,
                 ScrollViewportHeight = ContentScroll.ViewportHeight, ContentHeight = ContentScroll.ExtentHeight,
+                NormalizationEnabled = NormalizeAudioCheck.IsEnabled, NormalizationChecked = NormalizeAudioCheck.IsChecked,
+                NormalizationVisible = _stage == ShareStage.Size && sound.Top >= 0 && sound.Bottom <= ContentScroll.ActualHeight,
                 Synthetic = true, ExportedPath
             }), _lifetime.Token);
         }

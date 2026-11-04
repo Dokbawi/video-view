@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text;
 
 namespace VideoView.Core.Media;
 
@@ -17,6 +16,10 @@ public sealed class ExportService
 
     /// <summary>Audio channels must be one (mono) or two (stereo). TargetMegabytes uses decimal MB.</summary>
     public async Task<string> ExportAsync(ExportRequest request, int audioChannels,
+        IProgress<double>? progress = null, CancellationToken cancellationToken = default)
+        => (await ExportDetailedAsync(request, audioChannels, progress, cancellationToken).ConfigureAwait(false)).Path;
+
+    public async Task<ExportResult> ExportDetailedAsync(ExportRequest request, int audioChannels = 2,
         IProgress<double>? progress = null, CancellationToken cancellationToken = default)
     {
         Validate(request, audioChannels);
@@ -52,6 +55,9 @@ public sealed class ExportService
         var partial = MediaPaths.TemporarySibling(output, ".partial");
         var passLog = MediaPaths.TemporarySibling(output, ".passlog");
         var lastProgress = 0d;
+        var analyze = request.NormalizeAudio && tracks.Any(track => track.Gain > 0);
+        var analysisShare = analyze ? 0.15 : 0;
+        AudioNormalizationResult? normalization = request.NormalizeAudio && tracks.Length > 0 ? new(null, 0, false) : null;
         void Report(double value)
         {
             value = Math.Clamp(value, lastProgress, 1);
@@ -72,30 +78,41 @@ public sealed class ExportService
             var attemptStart = 1 - Math.Pow(0.1, attempt);
             var attemptSpan = 0.9 * Math.Pow(0.1, attempt);
             var step = request.AudioOnly ? fraction : (firstPass ? fraction * 0.4 : 0.4 + fraction * 0.6);
-            Report(Math.Min(0.999, attemptStart + attemptSpan * step));
+            Report(Math.Min(0.999, analysisShare + (1 - analysisShare) * (attemptStart + attemptSpan * step)));
         }
 
         Report(0);
         try
         {
+            if (analyze)
+            {
+                normalization = await AudioNormalization.MeasureAsync(_tools, request, source, tracks, audioChannels, line =>
+                {
+                    const string prefix = "out_time_us=";
+                    if (line.StartsWith(prefix, StringComparison.Ordinal) &&
+                        double.TryParse(line.AsSpan(prefix.Length), NumberStyles.Float, CultureInfo.InvariantCulture, out var micros) &&
+                        double.IsFinite(micros)) Report(analysisShare * Math.Clamp(micros / 1_000_000 / duration, 0, 1));
+                }, cancellationToken).ConfigureAwait(false);
+                Report(analysisShare);
+            }
             for (var attempt = 0; attempt < MaximumAttempts; attempt++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (!request.AudioOnly)
                 {
                     var firstPass = BuildArgs(request, source, partial, passLog, tracks, audioChannels,
-                        audioBitrate, videoBitrate, firstPass: true);
+                        audioBitrate, videoBitrate, normalization?.GainDecibels ?? 0, firstPass: true);
                     await _tools.RunWithProgressAsync(firstPass, line => OnProgress(line, attempt, true), cancellationToken).ConfigureAwait(false);
                 }
                 var args = BuildArgs(request, source, partial, passLog, tracks, audioChannels,
-                    audioBitrate, videoBitrate, firstPass: false);
+                    audioBitrate, videoBitrate, normalization?.GainDecibels ?? 0, firstPass: false);
                 await _tools.RunWithProgressAsync(args, line => OnProgress(line, attempt, false), cancellationToken).ConfigureAwait(false);
                 var size = new FileInfo(partial).Length;
                 if (size > 0 && size <= targetBytes)
                 {
                     ArchiveMedia.Publish(partial, output, cancellationToken);
                     Report(1);
-                    return output;
+                    return new(output, normalization);
                 }
                 await MediaPaths.DeleteTemporaryAsync(partial).ConfigureAwait(false);
                 if (size == 0) throw new IOException("FFmpeg produced an empty export.");
@@ -132,7 +149,7 @@ public sealed class ExportService
         _tools.ConcatenateAsync(segmentPaths, outputPath, hasVideo, cancellationToken);
 
     private static List<string> BuildArgs(ExportRequest request, string source, string partial, string passLog,
-        IReadOnlyList<ExportTrack> tracks, int channels, int audioBitrate, int videoBitrate, bool firstPass)
+        IReadOnlyList<ExportTrack> tracks, int channels, int audioBitrate, int videoBitrate, double normalizationGain, bool firstPass)
     {
         var args = new List<string> { "-hide_banner", "-nostdin", "-v", "warning", "-n",
             "-filter_threads", "1", "-filter_complex_threads", "1",
@@ -151,16 +168,9 @@ public sealed class ExportService
         if (firstPass || tracks.Count == 0) args.Add("-an");
         else
         {
-            var graph = new StringBuilder();
-            for (var i = 0; i < tracks.Count; i++)
-            {
-                graph.Append(CultureInfo.InvariantCulture,
-                    $"[0:a:{tracks[i].Index}]aresample=48000:async=1:first_pts=0,aformat=sample_fmts=fltp:channel_layouts={(channels == 1 ? "mono" : "stereo")},volume={tracks[i].Gain:G17}[a{i}];");
-            }
-            for (var i = 0; i < tracks.Count; i++) graph.Append(CultureInfo.InvariantCulture, $"[a{i}]");
-            graph.Append(CultureInfo.InvariantCulture,
-                $"amix=inputs={tracks.Count}:duration=longest:dropout_transition=0:normalize=0,alimiter=limit=0.95:level=0:latency=1,apad[mix]");
-            args.AddRange(["-filter_complex", graph.ToString(), "-map", "[mix]", "-c:a", "aac",
+            var graph = AudioNormalization.MixGraph(tracks, channels, request.EndSeconds - request.StartSeconds) +
+                FormattableString.Invariant($",volume={normalizationGain:G17}dB,alimiter=limit=0.95:level=0:latency=1[mix]");
+            args.AddRange(["-filter_complex", graph, "-map", "[mix]", "-c:a", "aac",
                 "-b:a", audioBitrate.ToString(CultureInfo.InvariantCulture), "-ar", "48000",
                 "-ac", channels.ToString(CultureInfo.InvariantCulture)]);
         }

@@ -45,6 +45,7 @@ public sealed class AppSettings
     public int ReplaySeconds { get; set; } = 60;
     public long BufferLimitBytes { get; set; } = 2L * 1024 * 1024 * 1024;
     public int TargetMegabytes { get; set; } = 20;
+    public double PreviewVolume { get; set; } = 0.1;
     public bool StartWithWindows { get; set; }
     public bool AutoStartReplay { get; set; }
     public bool HideCaptureBorder { get; set; } = true;
@@ -63,6 +64,7 @@ public sealed class AppSettings
         if (ReplaySeconds is not (30 or 60 or 180 or 300)) throw new ArgumentException("최근 구간은 30초·1분·3분·5분 중 선택.");
         if (BufferLimitBytes < 256L * 1024 * 1024 || BufferLimitBytes > 100L * 1024 * 1024 * 1024) throw new ArgumentException("임시 저장 용량은 256MB~100GB.");
         if (TargetMegabytes < 1 || TargetMegabytes > 10000) throw new ArgumentException("공유 용량은 1~10000MB.");
+        if (!double.IsFinite(PreviewVolume) || PreviewVolume is < 0 or > 1) throw new ArgumentException("미리듣기 음량은 0~100%.");
         if (!Path.IsPathFullyQualified(OutputDirectory) || !Path.IsPathFullyQualified(BufferDirectory)) throw new ArgumentException("저장 위치는 절대 경로가 필요함.");
         var enabled = AudioInputs.Where(a => a.Enabled).ToArray();
         if (enabled.Count(a => a.Kind == AudioKind.Microphone) > 1) throw new ArgumentException("마이크는 하나만 선택 가능.");
@@ -74,6 +76,7 @@ public sealed class AppSettings
 
 public sealed record ExportTrack(int Index, double Gain, bool Included = true);
 public sealed record ExportRequest(RecordingManifest Recording, double StartSeconds, double EndSeconds,
-    bool AudioOnly, int TargetMegabytes, IReadOnlyList<ExportTrack> Tracks, string OutputPath);
+    bool AudioOnly, int TargetMegabytes, IReadOnlyList<ExportTrack> Tracks, string OutputPath,
+    bool NormalizeAudio = false);
 public sealed record MediaInfo(double DurationSeconds, bool HasVideo, IReadOnlyList<TrackInfo> Tracks,
     int Width = 0, int Height = 0, double FramesPerSecond = 0);

@@ -38,6 +38,15 @@ public sealed class FfmpegTools
     public async Task<string> RunAsync(IEnumerable<string> args, CancellationToken cancellationToken = default) =>
         (await RunProcessAsync(FfmpegPath, args, null, cancellationToken).ConfigureAwait(false)).Output;
 
+    /// <summary>Returns bounded diagnostic output for analysis filters, without playing any audio.</summary>
+    public async Task<string> AnalyzeAsync(IEnumerable<string> args, Action<string>? onProgress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await RunProcessAsync(FfmpegPath, args, onProgress, cancellationToken).ConfigureAwait(false);
+        if (result.DiagnosticsTruncated) throw new InvalidDataException("FFmpeg analysis output was truncated.");
+        return result.Diagnostics;
+    }
+
     public Task<string> ConcatenateAsync(IReadOnlyList<string> segmentPaths, string outputPath,
         bool hasVideo, CancellationToken cancellationToken = default) =>
         ArchiveMedia.ConcatenateAsync(this, segmentPaths, outputPath, hasVideo, cancellationToken);
@@ -204,7 +213,7 @@ public sealed class FfmpegTools
             var error = await stderr.ConfigureAwait(false);
             if (process.ExitCode != 0)
                 throw new FfmpegException(executable, process.ExitCode, error.Text);
-            return new ProcessOutput(output.Text, output.Truncated);
+            return new ProcessOutput(output.Text, output.Truncated, error.Text, error.Truncated);
         }
         catch
         {
@@ -257,7 +266,7 @@ public sealed class FfmpegTools
     }
 
     private sealed record CapturedText(string Text, bool Truncated);
-    private sealed record ProcessOutput(string Output, bool Truncated);
+    private sealed record ProcessOutput(string Output, bool Truncated, string Diagnostics, bool DiagnosticsTruncated);
 }
 
 public sealed class FfmpegException(string executablePath, int exitCode, string diagnostics)

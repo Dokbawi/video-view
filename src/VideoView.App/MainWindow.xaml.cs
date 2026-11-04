@@ -118,7 +118,7 @@ public partial class MainWindow : Window
                 var dialog = new ShareWindow(_selected, _playStart, _playEnd, CurrentMix(), Tools(),
                     _settings.OutputDirectory, _settings.TargetMegabytes, true) { Owner = this };
                 if (_arguments.Contains("--compact")) { dialog.Width = dialog.MinWidth; dialog.Height = dialog.MinHeight; }
-                dialog.ConfigureSmoke(_arguments[shareIndex + 1], Path.GetFullPath(path));
+                dialog.ConfigureSmoke(_arguments[shareIndex + 1], Path.GetFullPath(path), _arguments.Contains("--sound-options"));
                 dialog.ShowDialog(); _exiting = true; Close(); return;
             }
             await Task.Delay(350);
@@ -140,7 +140,8 @@ public partial class MainWindow : Window
                     ExportVisible = bounds.Left >= 0 && bounds.Top >= 0 && bounds.Right <= content.ActualWidth && bounds.Bottom <= content.ActualHeight,
                     MixerVisible = mixerBounds.Top >= 0 && mixerBounds.Bottom <= content.ActualHeight - 35,
                     ActionsVisible = actionBounds.Left >= 0 && actionBounds.Right <= content.ActualWidth,
-                    PreviewHeight = EditorPreview.ActualHeight, TimelineWidth = Timeline.ActualWidth
+                    PreviewHeight = EditorPreview.ActualHeight, TimelineWidth = Timeline.ActualWidth,
+                    PreviewVolume = Player.Volume, PreviewVolumeControl = PreviewVolumeSlider.Value
                 }));
             }
             _exiting = true; Close(); return;
@@ -195,6 +196,7 @@ public partial class MainWindow : Window
         AutoReplayCheck.IsChecked = _settings.AutoStartReplay;
         HideBorderCheck.IsChecked = _settings.HideCaptureBorder;
         CaptureCursorCheck.IsChecked = _settings.CaptureCursor;
+        PreviewVolumeSlider.Value = _settings.PreviewVolume;
         FfmpegPathBox.Text = _settings.FfmpegPath;
         FfprobePathBox.Text = _settings.FfprobePath;
         AudioScopeBox.SelectedIndex = _settings.AudioInputs.Any(a => a.Enabled && a.Kind == AudioKind.System) ? 1 : 0;
@@ -252,6 +254,7 @@ public partial class MainWindow : Window
             Quality = (Quality)QualityBox.SelectedIndex, ReplaySeconds = new[] { 30, 60, 180, 300 }[Math.Max(0, ReplayBox.SelectedIndex)],
             BufferLimitBytes = checked((long)(ReadNumber(BufferLimit.Text, "임시 저장 한도") * 1024 * 1024 * 1024)),
             TargetMegabytes = _settings.TargetMegabytes,
+            PreviewVolume = PreviewVolumeSlider.Value,
             ReplayHotkey = useEditedHotkeys ? HotkeyText.Text.Trim() : _settings.ReplayHotkey,
             RecordHotkey = useEditedHotkeys ? RecordHotkeyText.Text.Trim() : _settings.RecordHotkey,
             BufferHotkey = useEditedHotkeys ? BufferHotkeyText.Text.Trim() : _settings.BufferHotkey,
@@ -471,7 +474,7 @@ public partial class MainWindow : Window
         LibraryNav.Background = page == "library" ? new SolidColorBrush(Color.FromRgb(37, 61, 52)) : Brushes.Transparent;
         SettingsNav.Background = page == "settings" ? new SolidColorBrush(Color.FromRgb(37, 61, 52)) : Brushes.Transparent;
         PageHeading.Text = page == "settings" ? "환경 설정" : "녹화";
-        PageDescription.Text = page == "settings" ? "영상 품질 · 저장 위치 · 전역 단축키" : "화면과 소리를 선택하고 기록을 시작하세요. 최근 구간 저장은 버퍼가 켜져 있어야 합니다.";
+        PageDescription.Text = page == "settings" ? "이어폰 음량 · 영상 품질 · 저장 위치 · 전역 단축키" : "화면과 소리를 선택하고 기록을 시작하세요. 최근 구간 저장은 버퍼가 켜져 있어야 합니다.";
         if (page != "library") { _playOnOpen = false; PausePlayback(); }
     }
     private void Home_Click(object sender, RoutedEventArgs e) => ShowPage("home");

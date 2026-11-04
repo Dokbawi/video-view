@@ -1,14 +1,14 @@
 <h1 align="center">VideoView</h1>
 <p align="center"><strong>지금 녹화하고, 방금 지나간 순간도 저장하세요.</strong><br>Windows용 로컬 음성 녹음 · 화면 녹화 · 최근 구간 저장</p>
 <p align="center">
-<a href="https://github.com/Dokbawi/video-view/releases/tag/v0.5.2">다운로드</a> ·
+<a href="https://github.com/Dokbawi/video-view/releases/tag/v0.6.0">다운로드</a> ·
 <a href="docs/USAGE.md">사용 가이드</a> ·
 <a href="https://github.com/Dokbawi/video-view/issues/new/choose">버그·기능 요청</a> ·
 <a href="https://github.com/Dokbawi/video-view/discussions">질문·사용 후기</a>
 </p>
 <p align="center">
 <img alt="Windows 11 x64" src="https://img.shields.io/badge/Windows_11-x64-0078D4">
-<img alt="Preview v0.5.2" src="https://img.shields.io/badge/preview-v0.5.2-95efcb">
+<img alt="Preview v0.6.0" src="https://img.shields.io/badge/preview-v0.6.0-95efcb">
 <img alt="Local recording" src="https://img.shields.io/badge/recording-local_only-343b46">
 </p>
 
@@ -24,7 +24,7 @@
 
 ## 다운로드와 실행
 
-**[Windows 설치 파일 다운로드](https://github.com/Dokbawi/video-view/releases/download/v0.5.2/VideoView-Setup-v0.5.2-win-x64.exe)**
+**[Windows 설치 파일 다운로드](https://github.com/Dokbawi/video-view/releases/download/v0.6.0/VideoView-Setup-v0.6.0-win-x64.exe)**
 
 **EXE 실행 → 자동 준비 → 앱 바로 실행.** ‘다음’을 여러 번 누르거나 압축을 풀 필요가 없습니다. 진행 창에서 앱과 미디어 도구를 준비한 뒤 VideoView를 자동으로 엽니다. .NET 런타임은 포함되어 있고, FFmpeg·FFprobe는 공식 Gyan 배포처에서 자동으로 다운로드·검증합니다. 처음 실행할 때 약 109MB의 추가 다운로드와 인터넷 연결이 필요합니다. 이후에는 시작 메뉴의 **VideoView**를 열면 바로 실행되며 녹음·편집은 로컬에서 동작합니다.
 
@@ -33,7 +33,7 @@
 <details>
 <summary>설치 없이 쓰는 포터블 ZIP</summary>
 
-[릴리즈](https://github.com/Dokbawi/video-view/releases/tag/v0.5.2)의 `VideoView-v0.5.2-win-x64.zip`을 폴더 전체로 압축 해제하고, `Install-MediaTools.cmd`에서 안내를 확인한 뒤 `Y`를 입력하세요. 미디어 도구 준비 후 `VideoView.exe`를 실행합니다. 이미 FFmpeg가 있으면 앱 설정에서 두 실행 파일 경로를 지정할 수도 있습니다.
+[릴리즈](https://github.com/Dokbawi/video-view/releases/tag/v0.6.0)의 `VideoView-v0.6.0-win-x64.zip`을 폴더 전체로 압축 해제하고, `Install-MediaTools.cmd`에서 안내를 확인한 뒤 `Y`를 입력하세요. 미디어 도구 준비 후 `VideoView.exe`를 실행합니다. 이미 FFmpeg가 있으면 앱 설정에서 두 실행 파일 경로를 지정할 수도 있습니다.
 </details>
 
 ## 주요 기능
@@ -47,9 +47,13 @@
 | 소리 따로 조정하기 | 마이크·앱별 독립 트랙, 편집 후 음량 조절·제외 |
 | 필요한 부분만 공유하기 | 시작·끝 자르기, 구간 반복, MP4 또는 음성 M4A 추출 |
 | 첨부 용량 맞추기 | 10/20/50/100MB·직접 입력, 완성 파일의 실제 크기 확인 |
+| 작은 녹음 소리 보정하기 | 공유 시 선택 구간 음량 분석·자동 증폭, 피크·증폭 상한, 원본 유지 |
+| 이어폰·미리듣기 음량 낮추기 | 장치별 Windows 마스터 dB 감쇠, 파일과 분리된 미리듣기 슬라이더 |
 | 기록 관리하기 | 검색·즐겨찾기·이름 변경·폴더 열기, 편집 자동 저장 |
 
 전체 컴퓨터 소리와 앱별 소리는 중복 기록을 막기 위해 동시에 선택하지 않습니다. 원본의 독립 트랙은 유지하고, 공유 파일에서는 선택한 음원을 하나로 합칩니다. Discord에는 파일 복사·끌어놓기로 직접 첨부하며 자동 전송은 하지 않습니다.
+
+EarTrumpet 등에서 앱별 소리를 작게 사용해 녹음도 작게 들린다면 **공유 → 공유 음량 자동 보정**을 사용하세요. 이어폰 자체가 너무 클 때는 **설정 → 이어폰 출력 낮추기**에서 Windows 마스터 음량을 낮춘 뒤 앱별 볼륨을 조금씩 맞출 수 있습니다. 출력 조절은 적용 버튼을 누를 때만 동작합니다. [음량 기능 사용법·한계](docs/USAGE.md#작은-녹음-소리--너무-큰-이어폰-소리)를 확인하세요.
 
 <details>
 <summary><strong>공유 화면 보기</strong></summary>

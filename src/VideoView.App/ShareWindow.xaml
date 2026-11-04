@@ -159,6 +159,15 @@
           </UniformGrid>
           <TextBlock x:Name="QualityGuidance" Style="{StaticResource ShareHelp}" Margin="0,10,0,0"/>
           <TextBlock x:Name="MixSummary" Style="{StaticResource ShareHelp}" Margin="0,5,0,0"/>
+          <Border Background="#24332F" CornerRadius="6" Padding="12" Margin="0,12,0,0">
+            <StackPanel>
+              <CheckBox x:Name="NormalizeAudioCheck" Content="공유 음량 자동 보정" IsChecked="True" Checked="Normalization_Changed" Unchecked="Normalization_Changed" AutomationProperties.Name="공유 파일의 작은 소리 자동 보정"/>
+              <TextBlock x:Name="NormalizationHint" Style="{StaticResource ShareHelp}" Margin="0,6,0,0"/>
+              <Expander Header="보정 기준·주의사항" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,7,0,0">
+                <TextBlock Style="{StaticResource ShareHelp}" Margin="0,6,0,0" Text="약 -16 LUFS 목표, 최대 +36 dB. 큰 피크가 있으면 증폭을 줄입니다. 무음·측정 불가 구간은 그대로 둡니다. 잡음도 함께 커질 수 있으니 완성 파일은 낮은 재생 음량부터 확인하세요."/>
+              </Expander>
+            </StackPanel>
+          </Border>
           <Border Background="{StaticResource Panel}" CornerRadius="6" Padding="11" Margin="0,12,0,0">
             <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
               <StackPanel VerticalAlignment="Center"><TextBlock Text="저장 위치" Foreground="{StaticResource Muted}" FontSize="11"/><TextBlock x:Name="FolderLabel" TextTrimming="CharacterEllipsis" FontSize="12" Margin="0,4,8,0"/></StackPanel>
@@ -176,6 +185,7 @@
         </StackPanel>
 
         <StackPanel x:Name="ReadyPanel" Visibility="Collapsed" Margin="0,18,0,0">
+          <TextBlock x:Name="NormalizationResultText" Style="{StaticResource ShareHelp}" Margin="0,0,0,12" AutomationProperties.LiveSetting="Polite"/>
           <TextBlock x:Name="ReadyInstruction" Text="위 클립을 채팅에 끌어놓으세요" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
           <TextBlock x:Name="ReadyHelp" Text="파일 복사 후 Ctrl+V로 붙여넣어도 됩니다. 전송 전 첨부 내용을 확인하세요." Style="{StaticResource ShareHelp}" Margin="0,7,0,13"/>
           <Button x:Name="OpenFolderButton" Content="저장 폴더 열기  ↗" Style="{StaticResource ShareButton}" Click="OpenFolder_Click" AutomationProperties.Name="완성 파일이 있는 폴더 열기"/>

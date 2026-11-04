@@ -31,6 +31,7 @@ public partial class MainWindow
     private void ArrangeSettings()
     {
         SettingsPage.Children.Remove(UsageNoticeCard);
+        SettingsPage.Children.Remove(ListeningVolumeCard);
         var cards = SettingsPage.Children.Cast<UIElement>().ToArray(); SettingsPage.Children.Clear();
         var grid = new Grid(); grid.ColumnDefinitions.Add(new()); grid.ColumnDefinitions.Add(new() { Width = new GridLength(18) }); grid.ColumnDefinitions.Add(new());
         var left = new StackPanel(); var right = new StackPanel(); Grid.SetColumn(right, 2);
@@ -40,6 +41,7 @@ public partial class MainWindow
         engineContent.Children.RemoveAt(0); engine.Child = null;
         engine.Child = new Expander { Header = "고급 · 녹화 엔진 경로", Foreground = (Brush)FindResource("Muted"), Content = engineContent };
         right.Children.Add(engine); grid.Children.Add(left); grid.Children.Add(right);
+        SettingsPage.Children.Add(ListeningVolumeCard);
         SettingsPage.Children.Add(grid);
         ((FrameworkElement)cards[4]).Margin = new Thickness(0);
         SettingsSaveHost.Child = cards[4];

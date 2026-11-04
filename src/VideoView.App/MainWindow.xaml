@@ -183,6 +183,9 @@
             </Border>
           </StackPanel>
           <StackPanel x:Name="SettingsPage" Visibility="Collapsed">
+            <Border x:Name="ListeningVolumeCard" Style="{StaticResource Card}" Margin="0,0,0,18">
+              <controls:ListeningVolumeControl/>
+            </Border>
             <Border Style="{StaticResource Card}">
               <StackPanel>
                 <TextBlock Text="영상 품질" Style="{StaticResource SectionTitle}"/>
@@ -431,7 +434,7 @@
           </DockPanel>
           <Border x:Name="EditorPreview" Grid.Row="1" Background="#070B10" BorderBrush="#26313C" BorderThickness="1" ClipToBounds="True">
             <Grid>
-              <MediaElement x:Name="Player" LoadedBehavior="Manual" UnloadedBehavior="Close" ScrubbingEnabled="True" Stretch="Uniform" MediaOpened="Player_Opened" MediaFailed="Player_Failed" MediaEnded="Player_Ended"/>
+              <MediaElement x:Name="Player" Volume="{Binding Value, ElementName=PreviewVolumeSlider, FallbackValue=0.1}" LoadedBehavior="Manual" UnloadedBehavior="Close" ScrubbingEnabled="True" Stretch="Uniform" MediaOpened="Player_Opened" MediaFailed="Player_Failed" MediaEnded="Player_Ended"/>
               <StackPanel x:Name="EditorPlaceholder" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <TextBlock Text="▶" FontSize="32" Foreground="#526777" HorizontalAlignment="Center"/>
                 <TextBlock x:Name="PreviewMessage" Text="녹화를 선택하면 미리보기를 준비합니다" Foreground="{StaticResource Muted}" Margin="0,12,0,0"/>
@@ -447,7 +450,14 @@
               <ColumnDefinition Width="Auto"/>
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <TextBlock x:Name="PlaybackClock" Text="00:00.00 / 00:00.00" FontFamily="Consolas" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock x:Name="PlaybackClock" Text="00:00.00 / 00:00.00" FontFamily="Consolas" Foreground="{StaticResource Muted}"/>
+              <StackPanel Orientation="Horizontal" Margin="0,5,0,0" ToolTip="내가 듣는 소리만 조절합니다. 공유 파일과 Windows 마스터 음량에는 영향이 없습니다.">
+                <TextBlock Text="미리듣기" FontSize="10" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+                <Slider x:Name="PreviewVolumeSlider" Minimum="0" Maximum="1" Value="0.1" SmallChange="0.01" LargeChange="0.1" ValueChanged="PreviewVolume_Changed" Width="90" Margin="8,0" AutomationProperties.Name="미리듣기 음량, 공유 파일에는 영향 없음"/>
+                <TextBlock Text="{Binding Value, ElementName=PreviewVolumeSlider, StringFormat={}{0:P0}}" FontSize="10" VerticalAlignment="Center" Foreground="{StaticResource Muted}"/>
+              </StackPanel>
+            </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
               <Button Content="−5초" Click="Back_Click" Padding="10,5" ToolTip="왼쪽 방향키"/>
               <Button x:Name="PlayButton" Content="▶  재생" Click="Play_Click" Padding="18,5" Margin="6,0" ToolTip="Space · 재생 / 일시정지"/>

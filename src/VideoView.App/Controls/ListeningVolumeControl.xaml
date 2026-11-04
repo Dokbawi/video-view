@@ -1,0 +1,31 @@
+<UserControl x:Class="VideoView.App.Controls.ListeningVolumeControl"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <StackPanel>
+  <DockPanel>
+   <Button DockPanel.Dock="Right" Content="장치 새로고침" Click="Refresh_Click" Padding="12,7"/>
+   <StackPanel Margin="0,0,12,0">
+    <TextBlock Text="이어폰 출력 낮추기" FontSize="17" FontWeight="SemiBold"/>
+    <TextBlock Text="듣는 소리 · Windows 마스터 음량" Foreground="{StaticResource Muted}" Margin="0,5,0,0"/>
+   </StackPanel>
+  </DockPanel>
+  <TextBlock Text="앱별 볼륨을 1~2로 쓰고 있다면, 출력 장치의 전체 음량부터 낮출 수 있습니다. 공유 파일 보정은 공유 창에서 따로 켜세요."
+   Style="{StaticResource MutedText}" Margin="0,12,0,12"/>
+  <ComboBox x:Name="Devices" DisplayMemberPath="Name" SelectionChanged="Device_Changed" AutomationProperties.Name="음량을 낮출 출력 장치"/>
+  <TextBlock x:Name="CurrentLevel" Text="새로고침으로 출력 장치를 확인하세요." TextWrapping="Wrap" Margin="0,9,0,12"/>
+  <DockPanel>
+   <Button x:Name="ApplyButton" DockPanel.Dock="Right" Content="이 장치 음량 낮추기" Click="Apply_Click" IsEnabled="False" Margin="12,0,0,0"/>
+   <ComboBox x:Name="Reduction" SelectedIndex="1" AutomationProperties.Name="현재 음량에서 낮출 데시벨">
+    <ComboBoxItem Content="−3 dB · 조금 낮게" Tag="3"/>
+    <ComboBoxItem Content="−6 dB · 더 낮게" Tag="6"/>
+    <ComboBoxItem Content="−12 dB · 많이 낮게" Tag="12"/>
+    <ComboBoxItem Content="−20 dB · 크게 낮게" Tag="20"/>
+   </ComboBox>
+  </DockPanel>
+  <TextBlock x:Name="Status" Text="버튼을 누를 때만 적용합니다. 앱별 볼륨과 음소거는 유지됩니다." TextWrapping="Wrap" Foreground="{StaticResource Accent}" Margin="0,12,0,0" AutomationProperties.LiveSetting="Polite"/>
+  <TextBlock Text="적용 후 EarTrumpet의 앱별 볼륨을 조금씩 올려 맞추세요. 30~50도 기기에 따라 클 수 있습니다. 변경한 마스터 음량은 앱 종료 후에도 유지되며, 다시 높이려면 Windows나 EarTrumpet에서 조절하세요."
+   Style="{StaticResource MutedText}" FontSize="11" Margin="0,8,0,0"/>
+  <TextBlock Text="별도 드라이버 없이 장치가 지원하는 범위에서 조절합니다. 녹음 경로에 따라 원본 녹음 음량에도 영향을 줄 수 있습니다."
+   Style="{StaticResource MutedText}" FontSize="11" Margin="0,6,0,0"/>
+ </StackPanel>
+</UserControl>

@@ -36,6 +36,10 @@ internal static class Program
     }
     private static async Task RunAsync(string[] args)
     {
+        if (args.Contains("--output-volume-info"))
+        {
+            Console.WriteLine(JsonSerializer.Serialize(new ListeningVolumeService().ReadOutputs())); return;
+        }
         if (args.Contains("--tone"))
         {
             using var output = new WaveOutEvent();
@@ -59,6 +63,11 @@ internal static class Program
         var work = Path.Combine(root, ".artifacts", "tests", DateTime.Now.ToString("yyyyMMdd-HHmmss"));
         Directory.CreateDirectory(work);
         Console.WriteLine("Artifacts: " + work);
+        if (args.Contains("--sound-tests"))
+        {
+            await SoundAdjustmentTests.RunAsync(tools, Path.Combine(work, "sound"), Assert);
+            Console.WriteLine($"PASS: {_checks} silent sound adjustment checks"); return;
+        }
         if (args.Contains("--preview-benchmark")) { await PreviewCacheTests.BenchmarkAsync(tools, Path.Combine(work, "preview-benchmark")); return; }
         if (args.Contains("--buffer-benchmark")) { await BufferOptimizationTests.BenchmarkAsync(Path.Combine(work, "buffer-benchmark")); return; }
         if (args.Contains("--buffer-soak"))
@@ -76,7 +85,11 @@ internal static class Program
         await tools.CheckAsync();
         if (!args.Contains("--media-only") && !args.Contains("--native-only"))
             await BufferOptimizationTests.RunAsync(tools, Path.Combine(work, "buffer"), Assert);
-        if (!args.Contains("--recording-only") && !args.Contains("--native-only")) await MediaTests.RunAsync(tools, Path.Combine(work, "media"), Assert);
+        if (!args.Contains("--recording-only") && !args.Contains("--native-only"))
+        {
+            await MediaTests.RunAsync(tools, Path.Combine(work, "media"), Assert);
+            await SoundAdjustmentTests.RunAsync(tools, Path.Combine(work, "sound"), Assert);
+        }
         if (!args.Contains("--media-only") && !args.Contains("--native-only"))
         {
             await RecordingTestsAsync(tools, Path.Combine(work, "audio"), false, 9);
