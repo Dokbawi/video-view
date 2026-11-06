@@ -63,6 +63,12 @@ internal static class Program
         var work = Path.Combine(root, ".artifacts", "tests", DateTime.Now.ToString("yyyyMMdd-HHmmss"));
         Directory.CreateDirectory(work);
         Console.WriteLine("Artifacts: " + work);
+        if (args.Contains("--capture-benchmark"))
+        {
+            await CaptureBenchmark.RunAsync(tools, work, !args.Contains("--cpu-convert"),
+                args.Contains("--60fps") ? 60 : 30, args.Contains("--720p") ? 720 : 1080);
+            return;
+        }
         if (args.Contains("--sound-tests"))
         {
             await SoundAdjustmentTests.RunAsync(tools, Path.Combine(work, "sound"), Assert);
@@ -81,6 +87,7 @@ internal static class Program
             Console.WriteLine($"PASS: {_checks} silent buffer checks"); return;
         }
         CoreTests(work);
+        VideoTests.FrameLifetimeTests(Assert);
         AudioTests.Run(Assert);
         await tools.CheckAsync();
         if (!args.Contains("--media-only") && !args.Contains("--native-only"))

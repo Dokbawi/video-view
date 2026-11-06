@@ -12,14 +12,13 @@ border can be hidden through the explicit Windows borderless-capture permission 
 denial keeps capture working with a visible border. There is no picker, whole-screen fallback, GDI fallback, or
 implicit target substitution. Setup failures throw from `Start()`.
 
-A dedicated MTA thread owns capture resources, copies each acquired D3D11 texture into
-a CPU-readable staging texture, and removes GPU row padding. `LatestFrame` publishes one
-complete `VideoFrame` atomically. `Pixels.Length == Width * Height * 4`, stride is
-`Width * 4`, and channels are B, G, R, A. Each array belongs to its snapshot and is never
-modified, pooled, or reused by the producer. Callers must treat the exposed `byte[]` as
-read-only; copy before editing. Multiple readers may keep frames after Stop/Dispose.
-Only one latest CPU frame is retained by the source; slow readers do not create a queue.
-Readers retaining old frames are responsible for their own memory use.
+A dedicated MTA thread owns capture resources, copies the newest eligible D3D11 texture into
+a CPU-readable staging texture, and removes GPU row padding. The encoder and UI use
+`AcquireLatestFrame()` and hold a read lease through their entire read (including asynchronous
+pipe I/O). Up to four packed BGRA buffers are reused. A held slot is never overwritten; if
+all slots are in use the producer skips the incoming image. Slow readers do not create a
+queue. For callers that need a lasting copy, `LatestFrame` returns an owned, immutable
+snapshot with stride `Width * 4`, valid after Stop/Dispose.
 
 **Recorder integration:** frame dimensions can change during a run. A changed positive
 `ContentSize` recreates the existing frame pool after the acquired frame is released.
@@ -43,9 +42,10 @@ Limitations: hardware D3D11 and WGC support are required. Protected/excluded con
 be black; minimized windows or inactive desktops may stop delivering frames without a
 close event. `Start()` confirms session setup, not first-frame arrival: the recorder must
 wait for a non-null `LatestFrame` with its own startup timeout. BGRA8 is SDR; HDR tone
-mapping is not implemented. CPU readback and one owned allocation per captured frame
-have a bandwidth/GC cost, especially at 4K. Capture does not impose an output frame rate;
-the recorder samples `LatestFrame` at its own cadence. Native handles can be reused;
+mapping is not implemented. GPU readback and raw pipe bandwidth still have a cost,
+especially at 4K. The capture source requests the recording frame rate (5 FPS for
+standalone preview), paces readback itself if Windows cannot, and drains stale frames
+before copying the latest. The encoder retains a constant output cadence. Native handles can be reused;
 catalog IDs reject cross-process HWND reuse and changed monitor device names, but are
 not persistent window identities.
 

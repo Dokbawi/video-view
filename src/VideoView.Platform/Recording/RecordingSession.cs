@@ -64,6 +64,7 @@ public sealed class RecordingSession : IAsyncDisposable
     private double _protectedUntil = -1;
     private double _replayStartedAt;
     private string _videoEncoder = "libx264";
+    private string? _nvencFilter, _nvencFormat;
 
     public RecordingSession(AppSettings settings, CaptureTarget? target, FfmpegTools tools,
         Func<IReadOnlyList<IAudioSource>>? audioFactory = null, Func<VideoFrame?>? videoFrames = null)
@@ -89,7 +90,12 @@ public sealed class RecordingSession : IAsyncDisposable
     public long RepeatedFrames => Interlocked.Read(ref _duplicateFrames);
     public long LateFrames => Interlocked.Read(ref _lateFrames);
     public string EncoderName => _videoEncoder;
+    internal int EncoderProcessId => _encoder?.Id ?? throw new InvalidOperationException("No recording encoder.");
+    public string VideoProcessing => _nvencFormat == "cuda" ? "GPU 크기·색상 변환" :
+        _nvencFormat == "bgra" ? "GPU 색상 변환" : "CPU 화면 변환";
     public VideoFrame? PreviewFrame => _testVideo?.Invoke() ?? _screen?.LatestFrame;
+    public VideoFrameLease? AcquirePreviewFrame() => _testVideo?.Invoke() is { } test
+        ? new VideoFrameLease(test) : _screen?.AcquireLatestFrame();
     public IReadOnlyList<(string Name, float Peak)> AudioLevels => _audio.Select(a => (a.Name, a.Peak)).ToArray();
     public event Action<string>? Status;
     public event Action<string>? Faulted;
@@ -134,16 +140,20 @@ public sealed class RecordingSession : IAsyncDisposable
                 if (_testVideo == null)
                 {
                     if (_target == null) throw new ArgumentException("녹화할 창 또는 모니터를 선택해 주세요.");
-                _screen = new ScreenCaptureSource(_target, _settings.FramesPerSecond,
-                    _settings.HideCaptureBorder, _settings.CaptureCursor);
+                    _screen = new ScreenCaptureSource(_target, _settings.FramesPerSecond,
+                        _settings.HideCaptureBorder, _settings.CaptureCursor);
                     _screen.Faulted += SignalFault;
                     _screen.Start();
                 }
                 var deadline = Stopwatch.StartNew();
-                while (PreviewFrame == null && deadline.Elapsed < TimeSpan.FromSeconds(8))
+                while (true)
+                {
+                    using var first = AcquirePreviewFrame();
+                    if (first != null) { (_width, _height) = (first.Frame.Width, first.Frame.Height); break; }
+                    if (deadline.Elapsed >= TimeSpan.FromSeconds(8))
+                        throw new InvalidOperationException("화면을 가져오지 못했음. 창을 복원하거나 모니터 캡처를 직접 선택해 주세요.");
                     await Task.Delay(40, cancellationToken);
-                var frame = PreviewFrame ?? throw new InvalidOperationException("화면을 가져오지 못했음. 창을 복원하거나 모니터 캡처를 직접 선택해 주세요.");
-                (_width, _height) = (frame.Width, frame.Height);
+                }
                 _videoEncoder = await SelectEncoderAsync(cancellationToken);
             }
             cancellationToken.ThrowIfCancellationRequested();
@@ -160,6 +170,11 @@ public sealed class RecordingSession : IAsyncDisposable
                 { UseShellExecute = false, CreateNoWindow = true, RedirectStandardError = true, RedirectStandardInput = true } };
             foreach (var arg in args) _encoder.StartInfo.ArgumentList.Add(arg);
             _encoder.Start();
+            // Give foreground games the CPU when both are runnable. Some process policies
+            // deny priority changes; capture should still work in that case.
+            try { _encoder.PriorityClass = ProcessPriorityClass.BelowNormal; }
+            catch (Exception error) when (error is System.ComponentModel.Win32Exception or InvalidOperationException)
+            { Trace.WriteLine($"Encoder priority unchanged: {error.Message}"); }
             _stderr = ConsumeDiagnosticsAsync(_encoder);
             _clock.Start();
             var pipeIndex = 0;
@@ -197,11 +212,11 @@ public sealed class RecordingSession : IAsyncDisposable
 
     private List<string> BuildArguments()
     {
-        var args = new List<string> { "-hide_banner", "-loglevel", "warning", "-y", "-filter_complex_threads", "1" };
+        var args = new List<string> { "-hide_banner", "-loglevel", "warning", "-y", "-filter_complex_threads", "1", "-filter_threads", "2" };
         if (_settings.Mode == CaptureMode.ScreenAndAudio)
         {
             var pipe = AddPipe("video");
-            args.AddRange(["-thread_queue_size", "8", "-f", "rawvideo", "-pixel_format", "bgra", "-video_size", $"{_width}x{_height}",
+            args.AddRange(["-thread_queue_size", "4", "-f", "rawvideo", "-pixel_format", "bgra", "-video_size", $"{_width}x{_height}",
                 "-framerate", _settings.FramesPerSecond.ToString(), "-probesize", "32", "-analyzeduration", "0", "-i", pipe]);
         }
         if (_audio.Count > 0)
@@ -218,14 +233,15 @@ public sealed class RecordingSession : IAsyncDisposable
         }
         if (_settings.Mode == CaptureMode.ScreenAndAudio)
         {
-            args.AddRange(["-map", "0:v:0", "-vf", $"scale=-2:{_settings.Height}:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
-                "-c:v", _videoEncoder, "-pix_fmt", "yuv420p", "-g", (_settings.FramesPerSecond * 2).ToString(),
+            args.AddRange(["-map", "0:v:0", "-vf", _nvencFilter ?? $"scale=-2:{_settings.Height}:force_original_aspect_ratio=decrease,pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1",
+                "-c:v", _videoEncoder, "-pix_fmt", _nvencFormat ?? "yuv420p", "-g", (_settings.FramesPerSecond * 2).ToString(),
                 "-force_key_frames", "expr:gte(t,n_forced*2)", "-bf", "0"]);
+            if (_nvencFormat != null) args.AddRange(["-profile:v", "high"]);
             var bitrate = _settings.Quality switch { Quality.Low => 4000, Quality.High => 16000, _ => 8000 };
             if (_settings.FramesPerSecond == 60) bitrate = bitrate * 3 / 2;
             if (_settings.Height == 720) bitrate = bitrate * 2 / 3;
             args.AddRange(["-b:v", bitrate + "k", "-maxrate", bitrate + "k", "-bufsize", (bitrate * 2) + "k"]);
-            if (_videoEncoder == "libx264") args.AddRange(["-preset", "ultrafast", "-tune", "zerolatency", "-sc_threshold", "0"]);
+            if (_videoEncoder == "libx264") args.AddRange(["-threads:v", "2", "-preset", "ultrafast", "-tune", "zerolatency", "-sc_threshold", "0"]);
             if (_videoEncoder == "h264_nvenc") args.AddRange(["-preset", "p2", "-tune", "ll"]);
         }
         for (var i = 0; i < _audio.Count; i++) args.AddRange(["-map", $"[a{i}]", $"-metadata:s:a:{i}", "title=" + _audio[i].Name]);
@@ -246,31 +262,40 @@ public sealed class RecordingSession : IAsyncDisposable
 
     private async Task PumpVideoAsync(NamedPipeServerStream pipe)
     {
+        VideoFrameLease? held = null;
         try
         {
             await pipe.WaitForConnectionAsync(_lifetime.Token);
             long written = 0;
-            VideoFrame? previousFrame = null;
             var canvas = new FrameCanvas(_width, _height);
             while (!_lifetime.IsCancellationRequested)
             {
                 await PaceAsync((double)written / _settings.FramesPerSecond);
-                var current = PreviewFrame ?? throw new IOException("화면 캡처 중단.");
                 // Old timeline slots keep the historical image; never backdate a fresh frame.
                 var overdue = ElapsedSeconds - (double)written / _settings.FramesPerSecond > 1.5 / _settings.FramesPerSecond;
                 if (overdue) Interlocked.Increment(ref _lateFrames);
-                var frame = overdue && previousFrame != null ? previousFrame : current;
-                if (!overdue || previousFrame == null) previousFrame = current;
+                if (!overdue || held == null)
+                {
+                    var next = AcquirePreviewFrame() ?? throw new IOException("화면 캡처 중단.");
+                    held?.Dispose(); held = next;
+                }
+                var frame = held.Frame;
                 if (frame.Sequence == _lastSequence) Interlocked.Increment(ref _duplicateFrames);
                 _lastSequence = frame.Sequence;
-                await pipe.WriteAsync(canvas.Fit(frame), _lifetime.Token).AsTask().WaitAsync(TimeSpan.FromSeconds(8), _lifetime.Token);
+                // Cancel the actual I/O on timeout; do not release/recycle a buffer while
+                // Windows still owns the outstanding write.
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
+                timeout.CancelAfter(TimeSpan.FromSeconds(8));
+                try { await pipe.WriteAsync(canvas.Fit(frame), timeout.Token); }
+                catch (OperationCanceledException) when (!_lifetime.IsCancellationRequested)
+                { throw new TimeoutException("영상 인코더 응답이 지연되었습니다. 설정에서 ‘게임 부하 줄이기’를 선택해 보세요."); }
                 written++;
                 if (ElapsedSeconds - (double)written / _settings.FramesPerSecond > 3) throw new IOException("인코더가 실시간 속도를 따라가지 못함. 화질·프레임을 낮춰 주세요.");
             }
         }
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested) { }
         catch (Exception e) { if (!_stopping) SignalFault(e.Message); }
-        finally { pipe.Dispose(); }
+        finally { pipe.Dispose(); held?.Dispose(); }
     }
 
     private async Task PumpAudioAsync(NamedPipeServerStream pipe)
@@ -324,8 +349,7 @@ public sealed class RecordingSession : IAsyncDisposable
                 await Task.Delay(200, _lifetime.Token);
                 await ReadSegmentsAsync();
                 if (_encoder is { HasExited: true }) throw new IOException("녹화 엔진이 종료됨. " + Diagnostics());
-                EnsureDiskSpace(_directory);
-                if (IsRecording) EnsureDiskSpace(_settings.OutputDirectory);
+                // The independent capacity monitor checks both destinations every second.
             }
         }
         catch (OperationCanceledException) when (_lifetime.IsCancellationRequested) { }
@@ -911,6 +935,29 @@ public sealed class RecordingSession : IAsyncDisposable
 
     private async Task<string> SelectEncoderAsync(CancellationToken token)
     {
+        // BGRA can go directly to NVENC. When a resize is needed, try the bundled
+        // CUDA scaler. Probe the exact geometry/format first: custom FFmpeg builds
+        // and hybrid laptops don't necessarily support this path.
+        var outputWidth = Math.Max(2, checked((int)Math.Round((double)_width * _settings.Height / _height / 2,
+            MidpointRounding.AwayFromZero) * 2));
+        var resize = outputWidth != _width || _settings.Height != _height;
+        var filter = resize ? $"hwupload_cuda,scale_cuda=w={outputWidth}:h={_settings.Height}:interp_algo=bilinear,setsar=1" : "setsar=1";
+        var format = resize ? "cuda" : "bgra";
+        if (_settings.UseGpuVideoConversion)
+        {
+            try
+            {
+                using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+                timeout.CancelAfter(TimeSpan.FromSeconds(5));
+                await _tools.RunAsync(["-hide_banner", "-nostdin", "-v", "error", "-filter_threads", "2", "-f", "lavfi",
+                    "-i", $"color=size={_width}x{_height}:rate=30,format=bgra", "-vf", filter, "-frames:v", "1",
+                    "-c:v", "h264_nvenc", "-pix_fmt", format, "-profile:v", "high", "-f", "null", "-"], timeout.Token);
+                _nvencFilter = filter; _nvencFormat = format;
+                return "h264_nvenc";
+            }
+            catch (Exception error) when (!token.IsCancellationRequested && error is IOException or OperationCanceledException)
+            { Trace.WriteLine("Using compatible recording conversion: " + error.Message); }
+        }
         foreach (var encoder in new[] { "h264_nvenc", "h264_qsv", "h264_amf" })
         {
             try

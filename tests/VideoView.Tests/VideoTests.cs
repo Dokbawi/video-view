@@ -9,6 +9,30 @@ namespace VideoView.Tests;
 
 public static class VideoTests
 {
+    public static void FrameLifetimeTests(Action<bool, string> assert)
+    {
+        var frames = new CaptureFrames();
+        void Publish(byte color, int width)
+        {
+            var slot = frames.BeginWrite(width * 4) ?? throw new InvalidOperationException("No writable slot");
+            Array.Fill(slot.Pixels, color); frames.Publish(slot, width, 1, color);
+        }
+        Publish(1, 1);
+        using var slowWrite = frames.Acquire()!;
+        var snapshot = frames.Snapshot()!;
+        for (byte color = 2; color < 32; color++) Publish(color, color % 2 + 1);
+        assert(slowWrite.Frame.Sequence == 1 && slowWrite.Frame.Pixels.All(p => p == 1) &&
+            snapshot.Pixels.All(p => p == 1), "Slow pipe reader and owned snapshot survive successive frame resizes without tearing");
+        using var preview = frames.Acquire()!;
+        Publish(32, 2); using var secondPreview = frames.Acquire()!;
+        Publish(33, 3); using var latest = frames.Acquire()!;
+        assert(frames.BeginWrite(4) == null && frames.Snapshot()!.Sequence == 33,
+            "Busy frame readers skip a new capture instead of growing memory or blocking the producer");
+        slowWrite.Dispose(); slowWrite.Dispose(); Publish(34, 3);
+        frames.Clear();
+        assert(frames.Acquire() == null && latest.Frame.Pixels.All(p => p == 33) && snapshot.Pixels.All(p => p == 1),
+            "Recycling resumes when a reader finishes; shutdown preserves outstanding reads");
+    }
     /// <summary>Captures, resizes, restarts, and closes a dedicated test window owned by this process.</summary>
     /// <remarks>
     /// The caller must supply a visible, non-minimized disposable test window and keep its UI

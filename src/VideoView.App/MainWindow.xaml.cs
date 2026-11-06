@@ -196,6 +196,7 @@ public partial class MainWindow : Window
         AutoReplayCheck.IsChecked = _settings.AutoStartReplay;
         HideBorderCheck.IsChecked = _settings.HideCaptureBorder;
         CaptureCursorCheck.IsChecked = _settings.CaptureCursor;
+        GpuConversionCheck.IsChecked = _settings.UseGpuVideoConversion;
         PreviewVolumeSlider.Value = _settings.PreviewVolume;
         FfmpegPathBox.Text = _settings.FfmpegPath;
         FfprobePathBox.Text = _settings.FfprobePath;
@@ -262,6 +263,7 @@ public partial class MainWindow : Window
             StartWithWindows = StartupCheck.IsChecked == true,
             HideCaptureBorder = HideBorderCheck.IsChecked == true,
             CaptureCursor = CaptureCursorCheck.IsChecked == true,
+            UseGpuVideoConversion = GpuConversionCheck.IsChecked == true,
             AutoStartReplay = AutoReplayCheck.IsChecked == true, AudioInputs = inputs,
             CaptureTargetId = target?.Id, CaptureTargetName = target?.Name
         };
@@ -363,7 +365,7 @@ public partial class MainWindow : Window
     {
         if (_preview != null) { StopPreview(); return Task.CompletedTask; }
         if (TargetBox.SelectedItem is not CaptureTarget target) throw new ArgumentException("창 또는 모니터를 먼저 선택해 주세요.");
-        _preview = new ScreenCaptureSource(target, hideBorder: HideBorderCheck.IsChecked == true,
+        _preview = new ScreenCaptureSource(target, framesPerSecond: 5, hideBorder: HideBorderCheck.IsChecked == true,
             captureCursor: CaptureCursorCheck.IsChecked == true);
         _preview.Faulted += message => Dispatcher.BeginInvoke(() => { SetStatus(message, true); StopPreview(); });
         _preview.Start(); PreviewButton.Content = "미리보기 끄기";
@@ -397,8 +399,16 @@ public partial class MainWindow : Window
     private void StopAudioTest()
     { foreach (var source in _testSources) source.Dispose(); _testSources.Clear(); if (AudioTestButton != null) AudioTestButton.Content = "입력 테스트"; }
 
+    private long _nextBackgroundPreview;
     private void Tick()
     {
+        if (!IsVisible || WindowState == WindowState.Minimized)
+        {
+            if (_preview != null) StopPreview();
+            if (_isPlaying) TickEditor();
+            if (_editDirty && DateTime.UtcNow >= _editSaveAt && !Timeline.IsDragging) FlushEdits();
+            return;
+        }
         var running = _session?.IsRunning == true;
         MarkMomentButton.IsEnabled = running && !_bookmarkBusy;
         MarkMomentHint.Text = $"표시 {_session?.BookmarkCount ?? 0}개 · {_settings.BookmarkHotkey}";
@@ -426,13 +436,16 @@ public partial class MainWindow : Window
         CaptureWarning.Text = _session?.CaptureNotice ?? _preview?.CaptureNotice ?? "";
         CaptureWarning.Visibility = CaptureWarning.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         SaveReplayButton.Content = _replaySaving ? "저장 중… 기록은 계속됩니다" : "방금 순간 저장";
-        if (running) RecordingDescription.Text = $"{_session!.EncoderName} · 지연 프레임 {_session.LateFrames:N0} · 반복 {_session.RepeatedFrames:N0} (정지 화면 포함)";
+        if (running) RecordingDescription.Text = _settings.Mode == CaptureMode.AudioOnly ? "음성만 기록 중" :
+            $"{_session!.EncoderName} · {_session.VideoProcessing} · 지연 {_session.LateFrames:N0} · 반복 {_session.RepeatedFrames:N0} (정지 화면 포함)";
         else RecordingDescription.Text = $"시작부터 끝까지 저장 · {_settings.RecordHotkey}";
         HotkeyHint.Text = $"보관 {_settings.BufferHotkey}  ·  저장 {_settings.ReplayHotkey}";
         if (!running && !_busy && !_captureBusy) SetCaptureControls(true);
-        // A hidden recorder or the editor does not need a live desktop bitmap copied at 5 FPS.
-        var showLivePreview = IsVisible && WindowState != WindowState.Minimized && HomePage.Visibility == Visibility.Visible;
-        var frame = showLivePreview ? _session?.PreviewFrame ?? _preview?.LatestFrame : null;
+        // When a game has focus, keep a second-screen preview available at just 1 FPS.
+        var showLivePreview = HomePage.Visibility == Visibility.Visible && (IsActive || Environment.TickCount64 >= _nextBackgroundPreview);
+        if (showLivePreview) _nextBackgroundPreview = Environment.TickCount64 + 1000;
+        using var previewLease = showLivePreview ? _session?.AcquirePreviewFrame() ?? _preview?.AcquireLatestFrame() : null;
+        var frame = previewLease?.Frame;
         if (frame != null && frame.Sequence != _previewSequence)
         {
             if (_previewBitmap == null || _previewBitmap.PixelWidth != frame.Width || _previewBitmap.PixelHeight != frame.Height)

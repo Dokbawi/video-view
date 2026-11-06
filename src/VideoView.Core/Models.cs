@@ -50,6 +50,7 @@ public sealed class AppSettings
     public bool AutoStartReplay { get; set; }
     public bool HideCaptureBorder { get; set; } = true;
     public bool CaptureCursor { get; set; } = true;
+    public bool UseGpuVideoConversion { get; set; } = true;
     public string ReplayHotkey { get; set; } = "Ctrl+Shift+F8";
     public string RecordHotkey { get; set; } = "Ctrl+Shift+F9";
     public string BufferHotkey { get; set; } = "Ctrl+Shift+F7";

@@ -1,14 +1,14 @@
 <h1 align="center">VideoView</h1>
 <p align="center"><strong>지금 녹화하고, 방금 지나간 순간도 저장하세요.</strong><br>Windows용 로컬 음성 녹음 · 화면 녹화 · 최근 구간 저장</p>
 <p align="center">
-<a href="https://github.com/Dokbawi/video-view/releases/tag/v0.6.0">다운로드</a> ·
+<a href="https://github.com/Dokbawi/video-view/releases/tag/v0.6.1">다운로드</a> ·
 <a href="docs/USAGE.md">사용 가이드</a> ·
 <a href="https://github.com/Dokbawi/video-view/issues/new/choose">버그·기능 요청</a> ·
 <a href="https://github.com/Dokbawi/video-view/discussions">질문·사용 후기</a>
 </p>
 <p align="center">
 <img alt="Windows 11 x64" src="https://img.shields.io/badge/Windows_11-x64-0078D4">
-<img alt="Preview v0.6.0" src="https://img.shields.io/badge/preview-v0.6.0-95efcb">
+<img alt="Preview v0.6.1" src="https://img.shields.io/badge/preview-v0.6.1-95efcb">
 <img alt="Local recording" src="https://img.shields.io/badge/recording-local_only-343b46">
 </p>
 
@@ -24,7 +24,7 @@
 
 ## 다운로드와 실행
 
-**[Windows 설치 파일 다운로드](https://github.com/Dokbawi/video-view/releases/download/v0.6.0/VideoView-Setup-v0.6.0-win-x64.exe)**
+**[Windows 설치 파일 다운로드](https://github.com/Dokbawi/video-view/releases/download/v0.6.1/VideoView-Setup-v0.6.1-win-x64.exe)**
 
 **EXE 실행 → 자동 준비 → 앱 바로 실행.** ‘다음’을 여러 번 누르거나 압축을 풀 필요가 없습니다. 진행 창에서 앱과 미디어 도구를 준비한 뒤 VideoView를 자동으로 엽니다. .NET 런타임은 포함되어 있고, FFmpeg·FFprobe는 공식 Gyan 배포처에서 자동으로 다운로드·검증합니다. 처음 실행할 때 약 109MB의 추가 다운로드와 인터넷 연결이 필요합니다. 이후에는 시작 메뉴의 **VideoView**를 열면 바로 실행되며 녹음·편집은 로컬에서 동작합니다.
 
@@ -33,7 +33,7 @@
 <details>
 <summary>설치 없이 쓰는 포터블 ZIP</summary>
 
-[릴리즈](https://github.com/Dokbawi/video-view/releases/tag/v0.6.0)의 `VideoView-v0.6.0-win-x64.zip`을 폴더 전체로 압축 해제하고, `Install-MediaTools.cmd`에서 안내를 확인한 뒤 `Y`를 입력하세요. 미디어 도구 준비 후 `VideoView.exe`를 실행합니다. 이미 FFmpeg가 있으면 앱 설정에서 두 실행 파일 경로를 지정할 수도 있습니다.
+[릴리즈](https://github.com/Dokbawi/video-view/releases/tag/v0.6.1)의 `VideoView-v0.6.1-win-x64.zip`을 폴더 전체로 압축 해제하고, `Install-MediaTools.cmd`에서 안내를 확인한 뒤 `Y`를 입력하세요. 미디어 도구 준비 후 `VideoView.exe`를 실행합니다. 이미 FFmpeg가 있으면 앱 설정에서 두 실행 파일 경로를 지정할 수도 있습니다.
 </details>
 
 ## 주요 기능
@@ -42,6 +42,7 @@
 | --- | --- |
 | 대화만 녹음하기 | 음성 전용 모드, 마이크와 선택한 앱 소리 기록 |
 | 화면·게임 기록하기 | 모니터 하나 또는 창 선택, 720p/1080p · 30/60fps |
+| 게임 부하 줄이기 | 720p·30fps 프리셋, 프레임 메모리 재사용, 지원 시 GPU 화면 변환 |
 | 지나간 순간 남기기 | 최근 30초·1분·3분·5분 저장, 연속 녹화와 동시 사용 |
 | 중요한 위치 찾기 | 녹화 중 전역 단축키로 표시, 편집 시간축에서 바로 이동 |
 | 소리 따로 조정하기 | 마이크·앱별 독립 트랙, 편집 후 음량 조절·제외 |

@@ -40,8 +40,8 @@ public partial class MainWindow
     {
         var preset = ((Button)sender).Tag as string;
         ResolutionBox.SelectedIndex = preset == "light" ? 0 : 1;
-        FpsBox.SelectedIndex = preset == "game" ? 1 : 0;
-        QualityBox.SelectedIndex = preset == "game" ? 2 : 1;
+        FpsBox.SelectedIndex = preset == "high" ? 1 : 0;
+        QualityBox.SelectedIndex = preset == "high" ? 2 : 1;
         UpdateCaptureInfo(); SetStatus("화질 프리셋 선택됨 · 설정 저장을 누르면 다음 기록부터 적용됩니다.");
     }
 

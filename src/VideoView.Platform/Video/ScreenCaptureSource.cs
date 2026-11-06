@@ -44,6 +44,7 @@ public sealed class ScreenCaptureSource : IDisposable
 
     /// <summary>The latest complete snapshot, or null before the first frame and after stop/failure.</summary>
     public VideoFrame? LatestFrame => Volatile.Read(ref _run)?.LatestFrame;
+    public VideoFrameLease? AcquireLatestFrame() => Volatile.Read(ref _run)?.Frames.Acquire();
 
     public void Start()
     {
@@ -110,7 +111,8 @@ public sealed class ScreenCaptureSource : IDisposable
         private readonly ManualResetEvent _stop = new(false);
         private readonly TaskCompletionSource _started = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly Thread _thread;
-        private VideoFrame? _latest;
+        internal CaptureFrames Frames { get; } = new();
+        private bool _nativePacing;
         private string? _failure;
         private int _finished;
         private bool _threadStarted;
@@ -124,7 +126,7 @@ public sealed class ScreenCaptureSource : IDisposable
             _thread.SetApartmentState(ApartmentState.MTA);
         }
 
-        public VideoFrame? LatestFrame => Volatile.Read(ref _latest);
+        public VideoFrame? LatestFrame => Frames.Snapshot();
         public bool IsFinished => Volatile.Read(ref _finished) != 0;
 
         public void Start()
@@ -181,6 +183,8 @@ public sealed class ScreenCaptureSource : IDisposable
 
                 WaitHandle[] signals = [_stop, _frameReady];
                 long resizePendingAt = 0;
+                long nextRead = 0;
+                var interval = Stopwatch.Frequency / _owner._framesPerSecond;
                 while (true)
                 {
                     int signaled = WaitHandle.WaitAny(signals, 250);
@@ -204,13 +208,18 @@ public sealed class ScreenCaptureSource : IDisposable
                         }
                         continue;
                     }
-                    // Bound work per wake-up so a fast producer cannot starve Stop.
-                    for (int i = 0; i < BufferCount && !_stop.WaitOne(0); i++)
+                    // Older Windows versions lack MinUpdateInterval. Wait before draining, so
+                    // the final repaint of a now-static window isn't discarded by throttling.
+                    var remaining = nextRead - Stopwatch.GetTimestamp();
+                    if (!_nativePacing && remaining > 0 &&
+                        _stop.WaitOne(TimeSpan.FromSeconds((double)remaining / Stopwatch.Frequency))) break;
+                    nextRead = Stopwatch.GetTimestamp() + interval;
                     {
                         SizeInt32? resized = null;
-                        using (var frame = pool.TryGetNextFrame())
+                        bool shrinkPublished = false;
+                        using (var frame = TakeNewestFrame(pool))
                         {
-                            if (frame is null) break;
+                            if (frame is null) continue;
                             var content = frame.ContentSize;
                             // Minimize/restore may transiently report zero size. Retain the last image.
                             if (content.Width <= 0 || content.Height <= 0) continue;
@@ -221,14 +230,12 @@ public sealed class ScreenCaptureSource : IDisposable
                                 // valid content before recreation; a static window may not repaint.
                                 if (content.Width <= size.Width && content.Height <= size.Height)
                                 {
-                                    var snapshot = ReadFrame(frame, content, device, context, ref staging);
-                                    if (!_stop.WaitOne(0)) Volatile.Write(ref _latest, snapshot);
+                                    shrinkPublished = ReadFrame(frame, content, device, context, ref staging);
                                 }
                             }
                             else
                             {
-                                var snapshot = ReadFrame(frame, size, device, context, ref staging);
-                                if (!_stop.WaitOne(0)) Volatile.Write(ref _latest, snapshot);
+                                ReadFrame(frame, size, device, context, ref staging);
                                 resizePendingAt = 0;
                             }
                         }
@@ -239,8 +246,7 @@ public sealed class ScreenCaptureSource : IDisposable
                             staging?.Dispose(); staging = null;
                             pool.Recreate(winrtDevice, PixelFormat, BufferCount, next);
                             size = next;
-                            resizePendingAt = _latest?.Width == size.Width && _latest.Height == size.Height ? 0 : Stopwatch.GetTimestamp();
-                            break;
+                            resizePendingAt = shrinkPublished ? 0 : Stopwatch.GetTimestamp();
                         }
                     }
                 }
@@ -254,7 +260,7 @@ public sealed class ScreenCaptureSource : IDisposable
             finally
             {
                 // Event handlers only signal wait handles, so Close cannot deadlock on capture locks.
-                Volatile.Write(ref _latest, null);
+                Frames.Clear();
                 if (item is not null) Cleanup(() => item.Closed -= OnItemClosed);
                 if (pool is not null) Cleanup(() => pool.FrameArrived -= OnFrameArrived);
                 if (session is not null) Cleanup(session.Dispose);
@@ -297,16 +303,41 @@ public sealed class ScreenCaptureSource : IDisposable
                 }
                 if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 26100) &&
                     Windows.Foundation.Metadata.ApiInformation.IsPropertyPresent("Windows.Graphics.Capture.GraphicsCaptureSession", "MinUpdateInterval"))
-                    session.MinUpdateInterval = TimeSpan.FromSeconds(1d / _owner._framesPerSecond);
+                {
+                    try
+                    {
+                        session.MinUpdateInterval = TimeSpan.FromSeconds(1d / _owner._framesPerSecond);
+                        _nativePacing = true;
+                    }
+                    catch (Exception error) when (error is COMException or NotSupportedException)
+                    { _nativePacing = false; Trace.WriteLine("Using capture-side frame pacing: " + error.Message); }
+                }
                 session.StartCapture();
                 return session;
             }
             catch { session.Dispose(); throw; }
         }
 
-        private VideoFrame ReadFrame(Direct3D11CaptureFrame frame, SizeInt32 size, ID3D11Device device,
+        private static Direct3D11CaptureFrame? TakeNewestFrame(Direct3D11CaptureFramePool pool)
+        {
+            var frame = pool.TryGetNextFrame();
+            if (frame == null) return null;
+            try
+            {
+                var next = pool.TryGetNextFrame(); // two pooled surfaces in total
+                if (next == null) return frame;
+                frame.Dispose();
+                return next;
+            }
+            catch { frame.Dispose(); throw; }
+        }
+
+        private bool ReadFrame(Direct3D11CaptureFrame frame, SizeInt32 size, ID3D11Device device,
             ID3D11DeviceContext context, ref ID3D11Texture2D? staging)
         {
+            int stride = checked(size.Width * 4);
+            var slot = Frames.BeginWrite(checked(stride * size.Height));
+            if (slot == null) return false; // all readers busy; keep the last complete frame
             using var texture = NativeCapture.GetTexture(frame.Surface);
             var description = texture.Description;
             if (description.Format != Format.B8G8R8A8_UNorm || description.Width < size.Width ||
@@ -327,14 +358,15 @@ public sealed class ScreenCaptureSource : IDisposable
             var mapped = context.Map(staging, 0, MapMode.Read, Vortice.Direct3D11.MapFlags.None);
             try
             {
-                int stride = checked(size.Width * 4);
                 int rowPitch = checked((int)mapped.RowPitch);
                 if (rowPitch < stride || mapped.DataPointer == 0)
                     throw new InvalidOperationException("D3D11 returned an invalid mapped surface.");
-                var pixels = new byte[checked(stride * size.Height)];
-                for (int y = 0; y < size.Height; y++)
-                    Marshal.Copy(mapped.DataPointer + checked(y * rowPitch), pixels, y * stride, stride);
-                return new VideoFrame(pixels, size.Width, size.Height, Interlocked.Increment(ref _owner._sequence));
+                if (rowPitch == stride)
+                    Marshal.Copy(mapped.DataPointer, slot.Pixels, 0, slot.Pixels.Length);
+                else for (int y = 0; y < size.Height; y++)
+                    Marshal.Copy(mapped.DataPointer + checked(y * rowPitch), slot.Pixels, y * stride, stride);
+                Frames.Publish(slot, size.Width, size.Height, Interlocked.Increment(ref _owner._sequence));
+                return true;
             }
             finally { context.Unmap(staging, 0); }
         }
